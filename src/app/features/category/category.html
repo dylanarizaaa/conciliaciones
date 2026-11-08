@@ -1,0 +1,59 @@
+<div class="mx-auto box-content flex max-w-[1240px] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+  @if (headerLoading()) {
+    <app-page-header-skeleton showBack />
+  } @else {
+    <app-page-header
+      [title]="nombre()"
+      description="Revisa y corrige las diferencias detectadas en esta categoría"
+      [breadcrumbs]="breadcrumbs()"
+      showBack
+      [backLink]="plataformaLink"
+      [backLabel]="'Volver a ' + nombrePlataforma()"
+    />
+  }
+
+  <div class="flex flex-col gap-6" [attr.aria-busy]="subprocesos.isLoading()">
+    <p class="sr-only" role="status">{{ statusMessage() }}</p>
+
+    @if (subprocesos.isLoading()) {
+      <app-summary-card-skeleton />
+      <h2 appSectionTitle>{{ tituloCanales() }}</h2>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(min(18.625rem,100%),1fr))] gap-4">
+        @for (item of skeletons; track item) {
+          <app-status-card-skeleton />
+        }
+      </div>
+    } @else if (hasError()) {
+      <app-error-state
+        title="No pudimos cargar la información de la categoría."
+        (retry)="reload()"
+      />
+    } @else {
+      <app-summary-card [metrics]="resumen()" [lastUpdate]="ultimaActualizacion()" />
+
+      <section class="flex flex-col gap-6" aria-labelledby="canales-title">
+        <h2 appSectionTitle id="canales-title">{{ tituloCanales() }}</h2>
+
+        @if (canales().length > 0) {
+          <ul role="list" class="grid grid-cols-[repeat(auto-fill,minmax(min(18.625rem,100%),1fr))] gap-4">
+            @for (canal of canales(); track canal.id) {
+              <li class="flex">
+                <app-status-card
+                  class="flex-1"
+                  [title]="canal.nombre"
+                  [metrics]="canal.metrics"
+                  [link]="['canales', canal.id]"
+                />
+              </li>
+            }
+          </ul>
+        } @else {
+          <app-empty-state
+            title="No hay diferencias en esta categoría."
+            description="Cuando se detecten diferencias por canal aparecerán aquí."
+          />
+        }
+      </section>
+    }
+  </div>
+</div>

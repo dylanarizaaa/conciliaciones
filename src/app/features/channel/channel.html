@@ -1,0 +1,56 @@
+<div class="mx-auto box-content flex max-w-[1240px] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+  @if (headerLoading()) {
+    <app-page-header-skeleton showBack />
+  } @else {
+    <app-page-header
+      [title]="nombre()"
+      [description]="descripcion()"
+      [breadcrumbs]="breadcrumbs()"
+      showBack
+      [backLink]="categoriaLink"
+      [backLabel]="'Volver a ' + nombreCategoria()"
+    />
+  }
+
+  <div class="flex flex-col gap-6">
+    <p class="sr-only" role="status">{{ statusMessage() }}</p>
+
+    @if (hasError()) {
+      <app-error-state title="No pudimos cargar las reglas de este canal." (retry)="reload()" />
+    } @else {
+      @if (resumen().length > 0) {
+        <app-summary-card [metrics]="resumen()" [lastUpdate]="ultimaActualizacion()" />
+      } @else {
+        <app-summary-card-skeleton />
+      }
+
+      <section class="flex flex-col gap-6" aria-labelledby="reglas-title">
+        <h2 appSectionTitle id="reglas-title">Reglas de conciliación</h2>
+
+        @if (isEmpty()) {
+          <app-empty-state
+            title="No hay reglas con diferencias en este canal."
+            description="Cuando se detecten diferencias aparecerán aquí."
+          />
+        } @else {
+          <app-data-table
+            [table]="table"
+            [loading]="reglas.isLoading()"
+            [skeletonRowCount]="skeletonRowCount()"
+            labelledBy="reglas-title"
+          />
+
+          @if (totalPages() > 0) {
+            <app-paginator
+              class="self-end"
+              [page]="pageNumber()"
+              [totalPages]="totalPages()"
+              ariaLabel="Paginación de reglas"
+              (pageChange)="goToPage($event)"
+            />
+          }
+        }
+      </section>
+    }
+  </div>
+</div>

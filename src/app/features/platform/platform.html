@@ -1,0 +1,61 @@
+<div class="mx-auto box-content flex max-w-[1240px] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+  @if (proyecto.isLoading()) {
+    <app-page-header-skeleton showBack />
+  } @else {
+    <app-page-header
+      [title]="nombre()"
+      description="Revisa y corrige las diferencias detectadas en los saldos y datos de esta plataforma"
+      [breadcrumbs]="breadcrumbs()"
+      showBack
+      [backLink]="conciliacionesLink"
+      backLabel="Volver a Conciliaciones"
+    />
+  }
+
+  <div class="flex flex-col gap-6" [attr.aria-busy]="procesos.isLoading()">
+    <p class="sr-only" role="status">{{ statusMessage() }}</p>
+
+    @if (procesos.isLoading()) {
+      <app-summary-card-skeleton />
+      <h2 appSectionTitle>Diferencias por categoría</h2>
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-4">
+        @for (item of skeletons; track item) {
+          <app-difference-card-skeleton />
+        }
+      </div>
+    } @else if (hasError()) {
+      <app-error-state
+        title="No pudimos cargar la información de la plataforma."
+        (retry)="reload()"
+      />
+    } @else {
+      <app-summary-card [metrics]="resumen()" [lastUpdate]="ultimaActualizacion()" />
+
+      <section class="flex flex-col gap-6" aria-labelledby="categorias-title">
+        <h2 appSectionTitle id="categorias-title">Diferencias por categoría</h2>
+
+        @if (categorias().length > 0) {
+          <ul role="list" class="grid grid-cols-[repeat(auto-fill,minmax(min(20rem,100%),1fr))] gap-4">
+            @for (categoria of categorias(); track categoria.id) {
+              <li class="flex">
+                <app-difference-card
+                  class="flex-1"
+                  [title]="categoria.nombre"
+                  [count]="categoria.casos"
+                  [amount]="categoria.monto"
+                  [inactive]="categoria.inactiva"
+                  [link]="['categorias', categoria.id]"
+                />
+              </li>
+            }
+          </ul>
+        } @else {
+          <app-empty-state
+            title="No hay diferencias en esta plataforma."
+            description="Cuando se detecten diferencias por categoría aparecerán aquí."
+          />
+        }
+      </section>
+    }
+  </div>
+</div>

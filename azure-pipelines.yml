@@ -1,0 +1,38 @@
+trigger:
+  branches:
+    include:
+      - Desarrollo
+      - QA
+      - Produccion
+pr:
+  branches:
+    include:
+      - Desarrollo
+      - QA
+      - Produccion
+pool:
+   vmImage: 'windows-latest'
+
+variables:
+  - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/De') }}:
+    - group: Angular_PortalFinanciero_MF_Dash_Conciliaciones - Desarrollo
+    - group: Angular_PortalFinanciero_MF_Dash_Conciliaciones - Desarrollo DevOps
+  - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/QA') }}:
+    - group: Angular_PortalFinanciero_MF_Dash_Conciliaciones - QA
+    - group: Angular_PortalFinanciero_MF_Dash_Conciliaciones - QA DevOps
+  - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/Prod') }}:
+    - group: Angular_PortalFinanciero_MF_Dash_Conciliaciones - Produccion
+    - group: Angular_PortalFinanciero_MF_Dash_Conciliaciones - Produccion DevOps
+
+resources:
+  repositories:
+    - repository: templates
+      type: git
+      name: servicios/DevOps-ConfiguracionesGenericas
+      ref: refs/heads/Propuesta-DevOps
+      endpoint: DevOpsCrossProjectConnection
+
+stages:
+  - template: azure/stages/templates/AngularTemplate.yaml@templates
+    parameters:
+      buildConfigurations: esbuild

@@ -1,0 +1,43 @@
+<div class="mx-auto box-content flex max-w-[1240px] flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+  <app-page-header
+    title="Conciliaciones"
+    description="Revisa y corrige las diferencias detectadas en los saldos y datos de las diferentes plataformas."
+    [breadcrumbs]="breadcrumbs"
+  />
+
+  <section class="flex flex-col gap-6" aria-labelledby="plataformas-title" [attr.aria-busy]="proyectos.isLoading()">
+    <h2 appSectionTitle id="plataformas-title">Plataformas</h2>
+
+    <p class="sr-only" role="status">{{ statusMessage() }}</p>
+
+    @if (proyectos.isLoading()) {
+      <div class="grid grid-cols-[repeat(auto-fill,minmax(min(18.625rem,100%),1fr))] gap-4">
+        @for (item of skeletons; track item) {
+          <app-status-card-skeleton />
+        }
+      </div>
+    } @else if (proyectos.error()) {
+      <app-error-state title="No pudimos cargar las plataformas." (retry)="reload()" />
+    } @else {
+      @if (plataformas().length > 0) {
+        <ul role="list" class="grid grid-cols-[repeat(auto-fill,minmax(min(18.625rem,100%),1fr))] gap-4">
+          @for (plataforma of plataformas(); track plataforma.id) {
+            <li class="flex">
+              <app-status-card
+                class="flex-1"
+                [title]="plataforma.nombre"
+                [metrics]="plataforma.metrics"
+                [link]="['plataformas', plataforma.id]"
+              />
+            </li>
+          }
+        </ul>
+      } @else {
+        <app-empty-state
+          title="No hay plataformas con diferencias."
+          description="Cuando se detecten diferencias aparecerán aquí."
+        />
+      }
+    }
+  </section>
+</div>
