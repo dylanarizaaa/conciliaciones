@@ -20,7 +20,7 @@ Todos cuelgan de `/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}`:
 | GET | `/plantilla` | Plantilla (`plantilla.schema.json`). |
 | GET | `/casos?pageNumber=1&pageSize=10&sort=campo:asc` | Página de datos (`datos.schema.json`). `sort` se repite si hay orden múltiple. |
 | GET | `/casos/reporte?sort=campo:asc` | Archivo (CSV) con el orden actual. Acción `download` de la barra de la tabla. |
-| POST | `/casos/resolver` con cuerpo `{ "ids": [...] }` | Resultado de la acción `request` "Resolver diferencias". |
+| POST | `/casos/resolver` con cuerpo `{ "ids": [...] }` | `{ "procesados", "pendientes", "validadoPor", "fechaValidacion" }`. La plantilla (`successDialog`) decide qué campos muestra el modal "Conciliación procesada". |
 
 Las rutas de datos y acciones las declara la propia plantilla (`dataSource.path`, `actions[].path`), así
 que el back puede cambiarlas sin tocar el front.
@@ -28,7 +28,8 @@ que el back puede cambiarlas sin tocar el front.
 ## Backend simulado
 
 Mientras el back publica esos endpoints, `src/app/core/mock-backend` los atiende con los JSON estáticos
-(ordena y pagina como el servidor, genera el CSV y marca los casos como "Resuelto"). Los demás
+(ordena y pagina como el servidor y genera el CSV). Al resolver, los casos salen de la lista salvo
+los de estado logístico "Cancelado" o "Devuelto", que simulan requerir una nueva validación. Los demás
 endpoints (proyectos, procesos, subprocesos) van al back real.
 
 Se apaga con `mockPendingEndpoints: false` en `src/environments/environment.ts`.

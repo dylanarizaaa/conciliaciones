@@ -253,28 +253,92 @@ describe('Rule', () => {
     expect(todas.getAttribute('aria-checked')).toBe('mixed');
   });
 
-  it('envía los ids seleccionados al resolver, limpia la selección y recarga la página', async () => {
+  it('resuelve la selección: el botón queda cargando y al responder abre el modal de resultado', async () => {
     await cargar();
     rowCheckbox('Juan Pablo Rodríguez').click();
     rowCheckbox('Diego Alejandro Silva').click();
     await stable();
     expect(contador()).toBe('2 Seleccionados');
 
-    button('Resolver diferencias').click();
+    const resolverBtn = button('Resolver diferencias');
+    resolverBtn.click();
     harness.detectChanges();
     const resolver = http.expectOne(`${RULE_API}/casos/resolver`);
     expect(resolver.request.method).toBe('POST');
     expect(resolver.request.body).toEqual({ ids: ['CASO-3452', 'CASO-3453'] });
-    expect(button('Procesando…').disabled).toBe(true);
 
-    resolver.flush(ok({ procesados: 2 }));
+    // Cargando: conserva el texto y el foco, anuncia aria-busy e ignora más clics.
+    expect(text(resolverBtn)).toBe('Resolver diferencias');
+    expect(resolverBtn.getAttribute('aria-busy')).toBe('true');
+    expect(resolverBtn.disabled).toBe(false);
+    expect(resolverBtn.querySelector('ng-icon')).not.toBeNull();
+    resolverBtn.click();
+    http.expectNone(`${RULE_API}/casos/resolver`);
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+
+    resolver.flush(
+      ok({ procesados: 2, pendientes: 0, validadoPor: 'Alexander Tipacoque', fechaValidacion: '2026-08-19' }),
+    );
+    await settle();
+    expectDatos().flush(ok(pagina({ rows: DATOS_REGLA.rows.slice(2), totalRows: 8 })));
+    await stable();
+
+    // El dialog de spartan vive en el overlay de CDK, fuera del componente.
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog).not.toBeNull();
+    expect(text(document.getElementById(dialog.getAttribute('aria-labelledby')!))).toBe(
+      'Conciliación procesada',
+    );
+    expect(text(document.getElementById(dialog.getAttribute('aria-describedby')!))).toBe(
+      'Los casos resueltos saldrán de la pantalla. Aquellos que requieran una nueva validación permanecerán en estado Pendiente.',
+    );
+    expect(
+      [...dialog.querySelectorAll('dl > div')].map((item) => [
+        text(item.querySelector('dt')),
+        text(item.querySelector('dd')),
+      ]),
+    ).toEqual([
+      ['Validado por:', 'Alexander Tipacoque'],
+      ['Fecha de validación:', '19/08/2026'],
+    ]);
+    expect(dialog.querySelector('[aria-label="Cerrar"]')).not.toBeNull();
+    expect(resolverBtn.hasAttribute('aria-busy')).toBe(false);
+    expect(contador()).toBe('0 Seleccionados');
+    expect(element.querySelectorAll('tbody tr')).toHaveLength(8);
+
+    const volver = [...dialog.querySelectorAll('button')].find((b) => text(b) === 'Volver a la lista')!;
+    volver.click();
+    await stable();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    harness.detectChanges();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    // Al volver a la lista, el foco queda en su título.
+    expect(document.activeElement?.id).toBe('diferencias-title');
+  });
+
+  it('sin modal en la plantilla, anuncia el resultado con el mensaje de la acción', async () => {
+    const [resolver] = PLANTILLA_REGLA.actions!;
+    const sinModal: ViewTemplate = {
+      ...PLANTILLA_REGLA,
+      actions: [{ ...resolver, successDialog: undefined } as typeof resolver],
+    };
+    await navigate();
+    flushNombres();
+    expectPlantilla().flush(ok(sinModal));
     await settle();
     expectDatos().flush(ok(pagina()));
     await stable();
 
-    expect(contador()).toBe('0 Seleccionados');
-    expect(mensajes()[1]).toBe('Enviamos a resolver las diferencias seleccionadas (2).');
-    expect(button('Resolver diferencias').disabled).toBe(true);
+    rowCheckbox('Juan Pablo Rodríguez').click();
+    await stable();
+    button('Resolver diferencias').click();
+    http.expectOne(`${RULE_API}/casos/resolver`).flush(ok({ procesados: 1 }));
+    await settle();
+    expectDatos().flush(ok(pagina()));
+    await stable();
+
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(mensajes()[1]).toBe('Enviamos a resolver las diferencias seleccionadas (1).');
   });
 
   it('muestra el error de una acción y permite reintentarla', async () => {

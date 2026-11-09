@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../config/api-base-url';
 import type { TablePage, ViewTemplate } from '../data-access/vista.model';
 import type { ApiResponse } from '../http/api-response';
 import { MOCK_BACKEND_LATENCY, mockBackendInterceptor } from './mock-backend.interceptor';
+import { MOCK_VALIDADOR, type ResolucionSimulada } from './mock-backend.state';
 
 const RULE = '/api/Conciliaciones/subprocesos/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
 
@@ -75,17 +76,28 @@ describe('mockBackendInterceptor', () => {
     expect(primera).toContain('Isabella Estefanía Suárez');
   });
 
-  it('resuelve casos y lo refleja en las consultas siguientes', async () => {
+  it('resuelve casos: salen de la lista salvo los que requieren nueva validación', async () => {
+    // CASO-3452 está "Entregado"; CASO-3455 está "Cancelado" (requiere nueva validación).
     const { resultado } = await firstValueFrom(
-      http.post<ApiResponse<{ procesados: number }>>(`${RULE}/casos/resolver`, {
-        ids: ['CASO-3452', 'NO-EXISTE'],
+      http.post<ApiResponse<ResolucionSimulada>>(`${RULE}/casos/resolver`, {
+        ids: ['CASO-3452', 'CASO-3455', 'NO-EXISTE'],
       }),
     );
     const pagina = await casos({ pageNumber: '1', pageSize: '10' });
 
-    expect(resultado.procesados).toBe(1);
-    expect(pagina.rows[0]['estado']).toBe('RESUELTO');
-    expect(pagina.rows[1]['estado']).toBe('PENDIENTE');
+    expect(resultado).toEqual({
+      procesados: 1,
+      pendientes: 1,
+      validadoPor: MOCK_VALIDADOR,
+      fechaValidacion: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
+    });
+    expect(pagina.totalRows).toBe(9);
+    expect(pagina.rows.map((row) => row['idCaso'])).not.toContain('CASO-3452');
+    expect(pagina.rows.find((row) => row['idCaso'] === 'CASO-3455')?.['estado']).toBe('PENDIENTE');
+    // El resumen baja con lo resuelto (redondeado a miles).
+    expect(pagina.summary?.casosTotales).toBe(9);
+    expect(pagina.summary!.montoAfectado).toBeLessThan(4800000);
+    expect(pagina.summary!.montoAfectado % 1000).toBe(0);
   });
 
   it('deja pasar al backend real los endpoints que ya existen', async () => {

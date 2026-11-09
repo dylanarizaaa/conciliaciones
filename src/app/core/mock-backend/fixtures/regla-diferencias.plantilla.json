@@ -12,7 +12,16 @@
       "method": "POST",
       "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos/resolver",
       "selection": { "blockId": "diferencias", "min": 1 },
-      "successMessage": "Enviamos a resolver las diferencias seleccionadas ({count})."
+      "successMessage": "Enviamos a resolver las diferencias seleccionadas ({count}).",
+      "successDialog": {
+        "title": "Conciliación procesada",
+        "description": "Los casos resueltos saldrán de la pantalla. Aquellos que requieran una nueva validación permanecerán en estado Pendiente.",
+        "details": [
+          { "label": "Validado por", "field": "validadoPor" },
+          { "label": "Fecha de validación", "field": "fechaValidacion", "format": "date" }
+        ],
+        "closeLabel": "Volver a la lista"
+      }
     }
   ],
   "blocks": [

@@ -23,6 +23,7 @@
   --color-gris-espacial: var(--gris-espacial);
   --color-acento: var(--acento);
   --color-acento-oscuro: var(--acento-oscuro);
+  --color-exito: var(--exito);
   --color-primary-hover: var(--primary-hover);
   --color-disabled: var(--disabled);
   --color-disabled-foreground: var(--disabled-foreground);
@@ -61,6 +62,8 @@
   --gris-espacial: #f0f0f0;
   --acento: #2569b3;
   --acento-oscuro: #1f5a99;
+  /* Ícono "check-circle-new" del modal de resultado. */
+  --exito: #005a37;
 
   /* Tokens semánticos derivados */
   --primary-hover: var(--acento-oscuro);

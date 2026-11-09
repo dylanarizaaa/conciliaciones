@@ -135,9 +135,27 @@ export interface DateTimeOptions {
 
 const DATE_PARTS: Record<NonNullable<DateTimeOptions['dateStyle']>, Intl.DateTimeFormatOptions> = {
   short: { day: '2-digit', month: '2-digit', year: '2-digit' },
-  medium: { day: 'numeric', month: 'short', year: 'numeric' },
+  medium: { day: '2-digit', month: '2-digit', year: 'numeric' },
   long: { day: 'numeric', month: 'long', year: 'numeric' },
 };
+
+/**
+ * Fecha a partir de un valor del back. Una fecha sin hora ("2026-08-19") se toma como fecha local:
+ * `new Date('2026-08-19')` sería medianoche UTC y en Colombia se vería como el día anterior.
+ */
+export function toDate(value: unknown): Date | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  const dateOnly = typeof value === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null;
+  const date = dateOnly
+    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
+    : new Date(value as string | number);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
 
 const TIME_PARTS: Record<NonNullable<DateTimeOptions['timeStyle']>, Intl.DateTimeFormatOptions> = {
   short: { hour: 'numeric', minute: '2-digit', hour12: true },
@@ -146,7 +164,7 @@ const TIME_PARTS: Record<NonNullable<DateTimeOptions['timeStyle']>, Intl.DateTim
 
 /**
  * Fecha y hora con el estilo del diseño: `short` + `short` → "19/04/26 5:00 p.m.";
- * `long` → "19 de abril 2026". Sin estilos se muestra la fecha corta.
+ * `medium` → "19/04/2026"; `long` → "19 de abril 2026". Sin estilos se muestra la fecha corta.
  */
 export function formatDateTime(value: Date, options: DateTimeOptions = {}): string {
   const zone: Intl.DateTimeFormatOptions = options.timeZone ? { timeZone: options.timeZone } : {};

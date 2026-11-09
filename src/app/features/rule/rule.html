@@ -14,16 +14,24 @@
         <!-- En el diseño el botón (56px) sobresale de la fila de la descripción (40px) sin empujar el contenido. -->
         <div appPageHeaderActions class="md:-my-2">
           @for (action of accionesPagina(); track action.id) {
-            <!-- "Btn principal" del diseño de esta pantalla: Negro digital. -->
+            @let enCurso = ejecutando() === action.id;
+            <!--
+              Mientras responde el servicio el botón queda "cargando": no se deshabilita (no pierde el
+              foco), anuncia aria-busy y la acción ignora más clics.
+            -->
             <button
               hlmBtn
-              size="lg"
               type="button"
-              class="bg-negro-digital hover:bg-gris-oscuro"
-              [disabled]="!puedeEjecutar(action)"
+              [disabled]="!enCurso && !puedeEjecutar(action)"
+              [attr.aria-busy]="enCurso ? 'true' : null"
+              [attr.aria-disabled]="enCurso ? 'true' : null"
+              class="aria-busy:cursor-wait aria-busy:hover:bg-negro-digital"
               (click)="ejecutar(action)"
             >
-              {{ ejecutando() === action.id ? 'Procesando…' : action.label }}
+              @if (enCurso) {
+                <ng-icon name="lucideLoaderCircle" class="animate-spin" data-icon="inline-start" aria-hidden="true" />
+              }
+              {{ action.label }}
             </button>
           }
         </div>
@@ -46,7 +54,10 @@
 
       @if (bloque(); as bloque) {
         <section class="flex flex-col gap-6" aria-labelledby="diferencias-title">
-          <h2 appSectionTitle id="diferencias-title">{{ bloque.title ?? 'Resultados' }}</h2>
+          <!-- Enfocable por código: al cerrar el modal de resultado el foco vuelve a la lista. -->
+          <h2 appSectionTitle id="diferencias-title" tabindex="-1" class="outline-none">
+            {{ bloque.title ?? 'Resultados' }}
+          </h2>
 
           @if (errorAccion(); as error) {
             <app-error-state
@@ -85,9 +96,10 @@
                       type="button"
                       class="h-10 px-0 text-base text-acento has-data-[icon=inline-end]:pe-0"
                       [disabled]="!puedeEjecutar(action)"
+                      [attr.aria-busy]="ejecutando() === action.id ? 'true' : null"
                       (click)="ejecutar(action)"
                     >
-                      {{ ejecutando() === action.id ? 'Procesando…' : action.label }}
+                      {{ action.label }}
                       @if (action.kind === 'download') {
                         <ng-icon name="lucideDownload" data-icon="inline-end" aria-hidden="true" />
                       }
@@ -116,6 +128,17 @@
             }
           }
         </section>
+        @if (resultado(); as resultado) {
+          <app-result-dialog
+            [open]="resultadoAbierto()"
+            [title]="resultado.dialogo.title"
+            [description]="resultado.dialogo.description ?? ''"
+            [items]="resultado.items"
+            [closeLabel]="resultado.dialogo.closeLabel ?? 'Volver a la lista'"
+            restoreFocus="#diferencias-title"
+            (closed)="resultadoAbierto.set(false)"
+          />
+        }
       } @else {
         <!-- La plantilla aún no llega: no se conocen las columnas. -->
         <div class="flex flex-col gap-6" aria-hidden="true">
