@@ -34,11 +34,6 @@ export function interpolateRow(template: string, row: TableRow): string {
   });
 }
 
-/** Reemplaza `{param}` por parámetros conocidos (p. ej. el nombre de archivo de un reporte). */
-export function interpolateParams(template: string, params: Readonly<Record<string, string>>): string {
-  return template.replace(PLACEHOLDER, (match, name: string) => params[name.trim()] ?? match);
-}
-
 /**
  * Resuelve una ruta del contrato (`/Conciliaciones/subprocesos/{subProcesoId}/casos`) con los
  * parámetros de la ruta del front. Cada valor se codifica para la URL.

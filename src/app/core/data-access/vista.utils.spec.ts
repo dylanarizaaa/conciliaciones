@@ -4,7 +4,6 @@ import {
   assertSupportedTemplate,
   findTableBlock,
   getPath,
-  interpolateParams,
   interpolateRow,
   leafColumnsOf,
   parseSorting,
@@ -54,12 +53,6 @@ describe('vista.utils', () => {
 
   it('rechaza rutas con parámetros desconocidos', () => {
     expect(() => resolveApiPath('/reglas/{otro}', { regla: 'x' })).toThrow(ApiError);
-  });
-
-  it('interpola parámetros conocidos y deja los demás intactos', () => {
-    expect(interpolateParams('diferencias-{regla}-{x}.csv', { regla: 'R1' })).toBe(
-      'diferencias-R1-{x}.csv',
-    );
   });
 
   it('serializa y lee el orden en formato campo:dirección', () => {

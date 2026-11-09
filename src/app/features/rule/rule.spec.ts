@@ -15,8 +15,16 @@ import type { ProyectosResultado } from '../../core/data-access/proyecto.model';
 import type { SubprocesosResultado } from '../../core/data-access/subproceso.model';
 import type { TablePage, TableRow, ViewTemplate } from '../../core/data-access/vista.model';
 import type { ApiResponse } from '../../core/http/api-response';
-import { DATOS_REGLA, PLANTILLA_REGLA } from '../../core/mock-backend/mock-backend.state';
+import casosEjemplo from '../../../../docs/contrato-vista/ejemplos/casos.response.json';
+import plantillaEjemplo from '../../../../docs/contrato-vista/ejemplos/plantilla.response.json';
+import resolverEjemplo from '../../../../docs/contrato-vista/ejemplos/resolver.response.json';
+import type { ResolucionDiferencias } from '../../core/data-access/regla.model';
 import { Rule } from './rule';
+
+/** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`). */
+const PLANTILLA_REGLA = (plantillaEjemplo as unknown as ApiResponse<ViewTemplate>).resultado;
+const DATOS_REGLA = (casosEjemplo as unknown as ApiResponse<TablePage>).resultado;
+const RESOLUCION = (resolverEjemplo as unknown as ApiResponse<ResolucionDiferencias>).resultado;
 
 const BASE = '/plataformas/p1/categorias/c1/canales/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
 const RULE_API = '/api/Conciliaciones/subprocesos/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
@@ -276,9 +284,7 @@ describe('Rule', () => {
     http.expectNone(`${RULE_API}/casos/resolver`);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
 
-    resolver.flush(
-      ok({ procesados: 2, pendientes: 0, validadoPor: 'Alexander Tipacoque', fechaValidacion: '2026-08-19' }),
-    );
+    resolver.flush(ok(RESOLUCION));
     await settle();
     expectDatos().flush(ok(pagina({ rows: DATOS_REGLA.rows.slice(2), totalRows: 8 })));
     await stable();
@@ -316,29 +322,42 @@ describe('Rule', () => {
     expect(document.activeElement?.id).toBe('diferencias-title');
   });
 
-  it('sin modal en la plantilla, anuncia el resultado con el mensaje de la acción', async () => {
-    const [resolver] = PLANTILLA_REGLA.actions!;
-    const sinModal: ViewTemplate = {
+  it('sin columna de checks en la plantilla, "Resolver diferencias" queda deshabilitado y se avisa', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const [bloque] = PLANTILLA_REGLA.blocks;
+    const sinSeleccion: ViewTemplate = {
       ...PLANTILLA_REGLA,
-      actions: [{ ...resolver, successDialog: undefined } as typeof resolver],
+      blocks: [
+        {
+          ...bloque,
+          table: {
+            ...bloque.table,
+            selection: undefined,
+            columns: bloque.table.columns.filter((column) => column.id !== 'seleccion'),
+          },
+        },
+      ],
     };
-    await navigate();
-    flushNombres();
-    expectPlantilla().flush(ok(sinModal));
-    await settle();
-    expectDatos().flush(ok(pagina()));
-    await stable();
+    try {
+      await navigate();
+      flushNombres();
+      expectPlantilla().flush(ok(sinSeleccion));
+      await settle();
+      expectDatos().flush(ok(pagina()));
+      await stable();
 
-    rowCheckbox('Juan Pablo Rodríguez').click();
-    await stable();
-    button('Resolver diferencias').click();
-    http.expectOne(`${RULE_API}/casos/resolver`).flush(ok({ procesados: 1 }));
-    await settle();
-    expectDatos().flush(ok(pagina()));
-    await stable();
-
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
-    expect(mensajes()[1]).toBe('Enviamos a resolver las diferencias seleccionadas (1).');
+      expect(element.querySelector('button[role="checkbox"]')).toBeNull();
+      expect(element.querySelector('p[aria-live="polite"]')).toBeNull();
+      const resolver = button('Resolver diferencias');
+      expect(resolver.disabled).toBe(true);
+      resolver.click();
+      http.expectNone(`${RULE_API}/casos/resolver`);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('no trae selección de filas'));
+      // La descarga no depende de la selección.
+      expect(button('Descargar reporte').disabled).toBe(false);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('muestra el error de una acción y permite reintentarla', async () => {

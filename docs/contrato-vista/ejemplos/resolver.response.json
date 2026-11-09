@@ -1,0 +1,13 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "procesados": 2,
+    "pendientes": 1,
+    "validadoPor": "Alexander Tipacoque",
+    "fechaValidacion": "2026-08-19T11:35:00-05:00"
+  }
+}
