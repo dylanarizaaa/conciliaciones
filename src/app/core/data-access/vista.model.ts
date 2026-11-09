@@ -256,6 +256,25 @@ export interface RequestAction {
   readonly selection?: { readonly blockId: string; readonly min?: number };
   /** `{count}` se reemplaza por la cantidad de ids enviados. */
   readonly successMessage?: string;
+  /** Modal que se abre cuando el servicio responde (p. ej. "Conciliación procesada"). */
+  readonly successDialog?: ResultDialogDefinition;
+}
+
+/** Dato del modal leído de la respuesta del servicio ("Validado por: …"). */
+export interface ResultDialogDetail {
+  readonly label: string;
+  /** Campo de `resultado`; admite rutas con punto. */
+  readonly field: string;
+  /** `date` → "19/08/2026". */
+  readonly format?: 'text' | 'date';
+}
+
+export interface ResultDialogDefinition {
+  readonly title: string;
+  readonly description?: string;
+  readonly details?: readonly ResultDialogDetail[];
+  /** Texto del botón que cierra el modal; por defecto "Volver a la lista". */
+  readonly closeLabel?: string;
 }
 
 export type ViewAction = DownloadAction | RequestAction;

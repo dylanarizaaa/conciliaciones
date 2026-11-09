@@ -17,8 +17,9 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // "Btn principal · Tipo: Primario": Negro digital (diseños de Regla y del modal de resultado).
         default:
-          'bg-primary text-primary-foreground hover:bg-primary-hover data-disabled:bg-disabled data-disabled:text-disabled-foreground data-disabled:opacity-100',
+          'bg-negro-digital text-blanco-digital hover:bg-gris-oscuro data-disabled:bg-disabled data-disabled:text-disabled-foreground data-disabled:opacity-100',
         outline:
           'border-primary bg-background text-primary hover:bg-gris-inicial aria-expanded:bg-gris-inicial data-disabled:border-disabled data-disabled:text-disabled data-disabled:opacity-100 dark:bg-input/30 dark:hover:bg-input/50',
         secondary:
@@ -30,8 +31,9 @@ export const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
+        // "Mediano": padding 16 / 24 con texto de 24px de alto → 56px.
         default:
-          'h-12 gap-2 px-6 text-base has-data-[icon=inline-end]:pe-5 has-data-[icon=inline-start]:ps-5',
+          'h-14 gap-2 px-6 text-base has-data-[icon=inline-end]:pe-5 has-data-[icon=inline-start]:ps-5',
         xs: "h-8 gap-1 px-3 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2 [&_ng-icon:not([class*='text-'])]:text-[length:--spacing(3.5)]",
         sm: "h-10 gap-1.5 px-4 text-sm in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pe-3 has-data-[icon=inline-start]:ps-3 [&_ng-icon:not([class*='text-'])]:text-[length:--spacing(4)]",
         lg: 'h-14 gap-2 px-8 text-base has-data-[icon=inline-end]:pe-6 has-data-[icon=inline-start]:ps-6',

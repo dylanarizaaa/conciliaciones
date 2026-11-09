@@ -7,6 +7,7 @@ import {
   formatNumber,
   formatPercent,
   formatTime,
+  toDate,
 } from './formatters';
 
 /** Normaliza los espacios no separables que usa Intl para comparar con texto plano. */
@@ -39,8 +40,9 @@ describe('formatters', () => {
       ).toBe('19/04/26 5:00 p.m.');
     });
 
-    it('formatea la fecha larga y la hora con segundos', () => {
+    it('formatea la fecha media, la larga y la hora con segundos', () => {
       const options = { timeZone: 'America/Bogota' } as const;
+      expect(formatDateTime(transaccion, { ...options, dateStyle: 'medium' })).toBe('19/04/2026');
       expect(formatDateTime(transaccion, { ...options, dateStyle: 'long' })).toBe('19 de abril 2026');
       expect(formatDateTime(transaccion, { ...options, timeStyle: 'medium' })).toBe('5:00:00 p.m.');
     });
@@ -49,6 +51,13 @@ describe('formatters', () => {
       const local = new Date(2026, 3, 19, 17, 0);
       expect(formatDateTime(local)).toBe('19/04/26');
       expect(formatDateTime(local, { timeStyle: 'short', timeZone: 'Zona/Inventada' })).toBe('5:00 p.m.');
+    });
+
+    it('lee fechas del back; una fecha sin hora es local (no se corre al día anterior)', () => {
+      expect(toDate('2026-08-19')).toEqual(new Date(2026, 7, 19));
+      expect(toDate('2026-04-19T17:00:00-05:00')?.toISOString()).toBe('2026-04-19T22:00:00.000Z');
+      expect(toDate('no es fecha')).toBeNull();
+      expect(toDate(null)).toBeNull();
     });
 
     it('formatea montos con moneda, signo y decimales', () => {

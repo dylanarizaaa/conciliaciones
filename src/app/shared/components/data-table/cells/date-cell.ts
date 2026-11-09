@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { formatDateTime } from '../../../../core/format/formatters';
+import { formatDateTime, toDate } from '../../../../core/format/formatters';
 import { toText } from './cell-styles';
 import { EmptyValue } from './empty-value';
 
@@ -28,14 +28,7 @@ export class DateCell {
   readonly timeZone = input<string | undefined>(undefined);
 
   protected readonly raw = computed(() => toText(this.value()));
-  protected readonly date = computed(() => {
-    const value = this.value();
-    if (value === null || value === undefined || value === '') {
-      return null;
-    }
-    const date = value instanceof Date ? value : new Date(value as string | number);
-    return Number.isNaN(date.getTime()) ? null : date;
-  });
+  protected readonly date = computed(() => toDate(this.value()));
   protected readonly text = computed(() => {
     const date = this.date();
     return date

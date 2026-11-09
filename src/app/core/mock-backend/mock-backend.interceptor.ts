@@ -104,7 +104,7 @@ function reporte(request: HttpRequest<unknown>, state: MockBackendState): HttpRe
 function resolver(request: HttpRequest<unknown>, state: MockBackendState): HttpResponse<unknown> {
   const ids = (request.body as { ids?: unknown } | null)?.ids;
   const validos = Array.isArray(ids) ? ids.map(String) : [];
-  return ok({ procesados: state.resolver(validos) });
+  return ok(state.resolver(validos));
 }
 
 function positiveInt(value: string | null, fallback: number): number {

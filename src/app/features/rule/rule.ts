@@ -13,7 +13,7 @@ import {
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideDownload } from '@ng-icons/lucide';
+import { lucideDownload, lucideLoaderCircle } from '@ng-icons/lucide';
 import { HlmButton } from '@spartan-ng/helm/button';
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton';
 import {
@@ -30,12 +30,14 @@ import { SubprocesosService } from '../../core/data-access/subprocesos.service';
 import type {
   DownloadAction,
   RequestAction,
+  ResultDialogDefinition,
   TablePageConsulta,
   TableRow,
   ViewAction,
 } from '../../core/data-access/vista.model';
 import {
   findTableBlock,
+  getPath,
   interpolateParams,
   leafColumnsOf,
   parseSorting,
@@ -43,7 +45,12 @@ import {
   serializeSorting,
 } from '../../core/data-access/vista.utils';
 import { VistasService } from '../../core/data-access/vistas.service';
-import { formatCurrency, formatInteger } from '../../core/format/formatters';
+import {
+  formatCurrency,
+  formatDateTime,
+  formatInteger,
+  toDate,
+} from '../../core/format/formatters';
 import { resourceValue } from '../../core/resource/resource-value';
 import { DataTable } from '../../shared/components/data-table/data-table';
 import {
@@ -57,6 +64,10 @@ import { PageHeader, type PageHeaderBreadcrumb } from '../../shared/components/p
 import { PageHeaderActions } from '../../shared/components/page-header/page-header-actions';
 import { PageHeaderSkeleton } from '../../shared/components/page-header/page-header-skeleton';
 import { Paginator } from '../../shared/components/paginator/paginator';
+import {
+  ResultDialog,
+  type ResultDialogItem,
+} from '../../shared/components/result-dialog/result-dialog';
 import { SectionTitle } from '../../shared/components/section-title/section-title';
 import { SummaryCard, type SummaryMetric } from '../../shared/components/summary-card/summary-card';
 import { SummaryCardSkeleton } from '../../shared/components/summary-card/summary-card-skeleton';
@@ -79,6 +90,26 @@ interface ActionError {
   readonly message: string;
 }
 
+/** Modal de resultado de una acción `request` con los datos de la respuesta. */
+interface ResultadoAccion {
+  readonly dialogo: ResultDialogDefinition;
+  readonly items: readonly ResultDialogItem[];
+}
+
+/** Datos del modal ("Validado por", "Fecha de validación") leídos de la respuesta del servicio. */
+function resultItems(dialogo: ResultDialogDefinition, respuesta: unknown): ResultDialogItem[] {
+  return (dialogo.details ?? []).flatMap((detail) => {
+    const value = getPath(respuesta, detail.field);
+    if (detail.format === 'date') {
+      const date = toDate(value);
+      return date ? [{ label: detail.label, value: formatDateTime(date, { dateStyle: 'medium' }) }] : [];
+    }
+    return value === null || value === undefined || value === ''
+      ? []
+      : [{ label: detail.label, value: String(value) }];
+  });
+}
+
 /**
  * Pantalla de una regla: casos con diferencias por resolver. La tabla, sus acciones y la fuente
  * de datos vienen de la plantilla del back (contrato en `docs/contrato-vista`).
@@ -96,11 +127,12 @@ interface ActionError {
     PageHeaderActions,
     PageHeaderSkeleton,
     Paginator,
+    ResultDialog,
     SectionTitle,
     SummaryCard,
     SummaryCardSkeleton,
   ],
-  providers: [provideIcons({ lucideDownload })],
+  providers: [provideIcons({ lucideDownload, lucideLoaderCircle })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './rule.html',
 })
@@ -356,6 +388,10 @@ export class Rule {
   protected readonly mensajeAccion = signal('');
   protected readonly errorAccion = signal<ActionError | null>(null);
 
+  /** Contenido del modal de resultado (se conserva al cerrarlo para la animación de salida). */
+  protected readonly resultado = signal<ResultadoAccion | null>(null);
+  protected readonly resultadoAbierto = signal(false);
+
   constructor() {
     // Si la página pedida ya no existe (p. ej. ?pagina=99), lleva a la última disponible.
     effect(() => {
@@ -426,11 +462,18 @@ export class Rule {
     this.run(
       action,
       () => this.vistas.enviar(action, resolveApiPath(action.path, this.pathParams()), ids),
-      () => {
-        const mensaje = action.successMessage ?? `${action.label}: listo.`;
-        this.mensajeAccion.set(mensaje.replace(/\{count\}/g, String(ids.length)));
+      (respuesta) => {
         this.rowSelection.set({});
         this.datos.reload();
+        const dialogo = action.successDialog;
+        if (dialogo) {
+          // El modal se anuncia solo (rol dialog + título); no hace falta el mensaje de estado.
+          this.resultado.set({ dialogo, items: resultItems(dialogo, respuesta) });
+          this.resultadoAbierto.set(true);
+        } else {
+          const mensaje = action.successMessage ?? `${action.label}: listo.`;
+          this.mensajeAccion.set(mensaje.replace(/\{count\}/g, String(ids.length)));
+        }
       },
     );
   }
