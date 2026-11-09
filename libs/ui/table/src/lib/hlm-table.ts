@@ -1,6 +1,11 @@
 import { Directive } from '@angular/core';
 import { classes } from '@spartan-ng/helm/utils';
 
+/**
+ * "Máscara tabla": contenedor con desplazamiento horizontal. El marco (borde Gris ráfaga y
+ * esquinas redondeadas) lo dibujan las celdas, así la barra de desplazamiento queda debajo de la
+ * tabla y los bordes de las columnas fijas no se mueven al desplazar.
+ */
 @Directive({
   selector: 'div[hlmTableContainer]',
   exportAs: 'hlmTableContainer',
@@ -8,10 +13,7 @@ import { classes } from '@spartan-ng/helm/utils';
 })
 export class HlmTableContainer {
   constructor() {
-    classes(
-      () =>
-        'relative w-full overflow-x-auto rounded-lg border border-gris-rafaga bg-card text-card-foreground',
-    );
+    classes(() => 'relative w-full overflow-x-auto text-card-foreground scrollbar-brand');
   }
 }
 
@@ -25,7 +27,8 @@ export class HlmTableContainer {
 })
 export class HlmTable {
   constructor() {
-    classes(() => 'w-full caption-bottom text-sm');
+    // Bordes separados: cada celda dibuja su parte del marco (ver HlmTh / HlmTd).
+    classes(() => 'w-full caption-bottom border-separate border-spacing-0 text-sm');
   }
 }
 
@@ -38,11 +41,7 @@ export class HlmTable {
   exportAs: 'hlmTHead',
   host: { 'data-slot': 'table-header' },
 })
-export class HlmTHead {
-  constructor() {
-    classes(() => 'bg-gris-inicial [&_tr]:border-b [&_tr]:hover:bg-transparent');
-  }
-}
+export class HlmTHead {}
 
 /**
  * Directive to apply Shadcn-like styling to a <tbody> element
@@ -53,11 +52,7 @@ export class HlmTHead {
   exportAs: 'hlmTBody',
   host: { 'data-slot': 'table-body' },
 })
-export class HlmTBody {
-  constructor() {
-    classes(() => '[&_tr:last-child]:border-0');
-  }
-}
+export class HlmTBody {}
 
 /**
  * Directive to apply Shadcn-like styling to a <tfoot> element
@@ -85,10 +80,8 @@ export class HlmTFoot {
 })
 export class HlmTr {
   constructor() {
-    classes(
-      () =>
-        'border-b border-gris-rafaga transition-colors hover:bg-gris-inicial/60 data-[state=selected]:bg-gris-inicial has-aria-expanded:bg-gris-inicial/60',
-    );
+    // El fondo (hover / seleccionada) lo pintan las celdas: así las columnas fijas son opacas.
+    classes(() => 'group/row');
   }
 }
 
@@ -103,9 +96,10 @@ export class HlmTr {
 })
 export class HlmTh {
   constructor() {
+    // Encabezado Gris inicial; arriba y a los lados forma el marco de la tabla.
     classes(
       () =>
-        'h-12 px-4 text-start align-middle text-sm font-normal whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pe-0',
+        'h-12 border-b border-gris-rafaga bg-gris-inicial px-4 text-start align-middle text-sm font-normal whitespace-nowrap text-muted-foreground first:border-s last:border-e [tr:first-child>&]:border-t [tr:first-child>&]:first:rounded-ss-lg [tr:first-child>&]:last:rounded-se-lg [&:has([role=checkbox])]:pe-0',
     );
   }
 }
@@ -121,9 +115,11 @@ export class HlmTh {
 })
 export class HlmTd {
   constructor() {
+    // Filas de 72px separadas por Gris ráfaga; la última fila cierra el marco por abajo.
+    // Hover = Gris inicial al 60 % sobre el fondo de la tarjeta, ya mezclado para ser opaco.
     classes(
       () =>
-        'h-18 px-4 align-middle text-sm whitespace-nowrap text-muted-foreground [&:has([role=checkbox])]:pe-0',
+        'h-18 border-b border-gris-rafaga bg-card px-4 align-middle text-sm whitespace-nowrap text-muted-foreground transition-colors group-hover/row:bg-[color-mix(in_srgb,var(--gris-inicial)_60%,var(--card))] group-data-[state=selected]/row:bg-gris-inicial first:border-s last:border-e [tr:last-child>&]:first:rounded-es-lg [tr:last-child>&]:last:rounded-ee-lg [&:has([role=checkbox])]:pe-0',
     );
   }
 }

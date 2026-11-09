@@ -1,0 +1,549 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:conciliaciones:vista:1.0.0",
+  "title": "Plantilla de vista paramétrica",
+  "description": "Contrato del endpoint de plantilla. Describe qué bloques pinta la vista y cómo se configura cada tabla (TanStack Table v9).",
+  "type": "object",
+  "required": ["schemaVersion", "id", "layout", "blocks"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "pattern": "^1\\.\\d+\\.\\d+$" },
+    "id": { "$ref": "#/$defs/identifier" },
+    "revision": { "type": "string" },
+    "title": { "type": "string" },
+    "layout": { "$ref": "#/$defs/layout" },
+    "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/block" } },
+    "actions": {
+      "description": "Acciones de la página (se pintan en el encabezado, p. ej. \"Resolver diferencias\").",
+      "type": "array",
+      "items": { "$ref": "#/$defs/action" }
+    }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
+    "fieldPath": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$" },
+    "apiPath": {
+      "description": "Ruta relativa al API base, con llaves {param} que se resuelven con los parámetros de la ruta del front.",
+      "type": "string",
+      "pattern": "^/(?!/)[^:?#\\\\]*$"
+    },
+    "tone": { "enum": ["neutral", "info", "success", "warning", "danger"] },
+    "emphasis": { "enum": ["default", "lead", "highlight"] },
+    "fractionDigits": { "type": "integer", "minimum": 0, "maximum": 6 },
+    "layout": {
+      "type": "object",
+      "required": ["type", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "stack" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["blockId"],
+            "additionalProperties": false,
+            "properties": { "blockId": { "$ref": "#/$defs/identifier" } }
+          }
+        }
+      }
+    },
+    "block": { "oneOf": [{ "$ref": "#/$defs/tableBlock" }] },
+    "tableBlock": {
+      "type": "object",
+      "required": ["id", "type", "dataSource", "table"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": { "const": "table" },
+        "title": { "type": "string" },
+        "dataSource": { "$ref": "#/$defs/dataSource" },
+        "toolbar": { "$ref": "#/$defs/toolbar" },
+        "table": { "$ref": "#/$defs/table" }
+      }
+    },
+    "dataSource": {
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": false,
+      "properties": {
+        "path": { "$ref": "#/$defs/apiPath" },
+        "pagination": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["server", "none"], "default": "server" },
+            "defaultPageSize": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 },
+            "pageSizeOptions": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 1, "maximum": 100 },
+              "uniqueItems": true
+            }
+          }
+        },
+        "sorting": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["server", "client"], "default": "server" },
+            "multi": { "type": "boolean", "default": false },
+            "default": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "desc"],
+                "additionalProperties": false,
+                "properties": { "id": { "$ref": "#/$defs/identifier" }, "desc": { "type": "boolean" } }
+              }
+            }
+          }
+        },
+        "filtering": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "mode": { "enum": ["server", "client"], "default": "server" } }
+        }
+      }
+    },
+    "toolbar": {
+      "description": "Barra sobre la tabla: contador de seleccionados y acciones del bloque (p. ej. \"Descargar reporte\").",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selectionSummary": { "type": "boolean", "default": false },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } }
+      }
+    },
+    "table": {
+      "type": "object",
+      "required": ["rowId", "columns"],
+      "additionalProperties": false,
+      "properties": {
+        "rowId": { "$ref": "#/$defs/fieldPath" },
+        "density": { "enum": ["default", "compact"], "default": "default" },
+        "emptyState": {
+          "type": "object",
+          "required": ["title"],
+          "additionalProperties": false,
+          "properties": { "title": { "type": "string" }, "description": { "type": "string" } }
+        },
+        "selection": {
+          "description": "Selección de filas. Se identifica cada fila por rowId, así que la selección sobrevive al orden y a la paginación.",
+          "type": "object",
+          "required": ["mode"],
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "const": "multi" },
+            "persistAcrossPages": { "type": "boolean", "default": true }
+          }
+        },
+        "columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/column" } }
+      },
+      "if": {
+        "properties": {
+          "columns": {
+            "contains": {
+              "type": "object",
+              "required": ["cell"],
+              "properties": { "cell": { "properties": { "component": { "const": "RowCheckbox" } } } }
+            }
+          }
+        }
+      },
+      "then": { "required": ["selection"] }
+    },
+    "column": { "oneOf": [{ "$ref": "#/$defs/groupColumn" }, { "$ref": "#/$defs/leafColumn" }] },
+    "groupColumn": {
+      "type": "object",
+      "required": ["id", "header", "columns"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "header": { "$ref": "#/$defs/header" },
+        "columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/column" } }
+      }
+    },
+    "leafColumn": {
+      "type": "object",
+      "required": ["id", "header"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "accessorKey": { "$ref": "#/$defs/fieldPath" },
+        "header": { "$ref": "#/$defs/header" },
+        "cell": { "$ref": "#/$defs/cell" },
+        "meta": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "align": { "enum": ["start", "center", "end"] },
+            "width": { "oneOf": [{ "enum": ["fill", "hug"] }, { "type": "integer", "minimum": 40 }] }
+          }
+        },
+        "enableSorting": { "type": "boolean", "default": false },
+        "sortType": { "enum": ["alphanumeric", "text", "basic", "datetime"] },
+        "enableColumnFilter": { "type": "boolean", "default": false },
+        "filter": { "$ref": "#/$defs/filter" },
+        "hidden": { "type": "boolean", "default": false },
+        "enableHiding": { "type": "boolean", "default": true },
+        "pin": { "enum": ["start", "end"] }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "cell": { "properties": { "component": { "enum": ["LinkCell", "RowCheckbox"] } } } },
+            "required": ["cell"]
+          },
+          "then": {
+            "properties": { "enableSorting": { "const": false }, "enableColumnFilter": { "const": false } }
+          },
+          "else": { "required": ["accessorKey"] }
+        },
+        {
+          "if": { "properties": { "enableColumnFilter": { "const": true } }, "required": ["enableColumnFilter"] },
+          "then": { "required": ["filter"] },
+          "else": { "not": { "required": ["filter"] } }
+        }
+      ]
+    },
+    "header": {
+      "oneOf": [
+        { "type": "string", "minLength": 1 },
+        {
+          "type": "object",
+          "required": ["component", "inputs"],
+          "additionalProperties": false,
+          "properties": {
+            "component": { "const": "SortIndicator" },
+            "inputs": {
+              "type": "object",
+              "required": ["label"],
+              "additionalProperties": false,
+              "properties": { "label": { "type": "string", "minLength": 1 } }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["component", "inputs"],
+          "additionalProperties": false,
+          "properties": {
+            "component": { "const": "SelectAllCheckbox" },
+            "inputs": {
+              "type": "object",
+              "required": ["ariaLabel"],
+              "additionalProperties": false,
+              "properties": { "ariaLabel": { "type": "string", "minLength": 1 } }
+            }
+          }
+        }
+      ]
+    },
+    "cell": {
+      "type": "object",
+      "required": ["component"],
+      "properties": {
+        "component": {
+          "enum": [
+            "TextCell",
+            "NumberCell",
+            "CurrencyCell",
+            "PercentCell",
+            "DateCell",
+            "BooleanCell",
+            "BadgeCell",
+            "LinkCell",
+            "RowCheckbox"
+          ]
+        }
+      },
+      "oneOf": [
+        { "$ref": "#/$defs/textCell" },
+        { "$ref": "#/$defs/numberCell" },
+        { "$ref": "#/$defs/currencyCell" },
+        { "$ref": "#/$defs/percentCell" },
+        { "$ref": "#/$defs/dateCell" },
+        { "$ref": "#/$defs/booleanCell" },
+        { "$ref": "#/$defs/badgeCell" },
+        { "$ref": "#/$defs/linkCell" },
+        { "$ref": "#/$defs/rowCheckbox" }
+      ]
+    },
+    "textCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "TextCell" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "emphasis": { "$ref": "#/$defs/emphasis" },
+            "secondaryAccessorKey": { "$ref": "#/$defs/fieldPath" },
+            "truncate": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "numberCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "NumberCell" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "emphasis": { "$ref": "#/$defs/emphasis" },
+            "minimumFractionDigits": { "$ref": "#/$defs/fractionDigits" },
+            "maximumFractionDigits": { "$ref": "#/$defs/fractionDigits" }
+          }
+        }
+      }
+    },
+    "currencyCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "CurrencyCell" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "emphasis": { "$ref": "#/$defs/emphasis" },
+            "currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+            "currencyField": { "$ref": "#/$defs/fieldPath" },
+            "minimumFractionDigits": { "$ref": "#/$defs/fractionDigits" },
+            "maximumFractionDigits": { "$ref": "#/$defs/fractionDigits" },
+            "signDisplay": { "enum": ["auto", "always", "exceptZero", "never"] }
+          }
+        }
+      }
+    },
+    "percentCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "PercentCell" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "emphasis": { "$ref": "#/$defs/emphasis" },
+            "minimumFractionDigits": { "$ref": "#/$defs/fractionDigits" },
+            "maximumFractionDigits": { "$ref": "#/$defs/fractionDigits" }
+          }
+        }
+      }
+    },
+    "dateCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "DateCell" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dateStyle": { "enum": ["short", "medium", "long"] },
+            "timeStyle": { "enum": ["short", "medium"] },
+            "timeZone": {
+              "description": "Zona IANA en la que se muestra la fecha (p. ej. America/Bogota). Si falta, se usa la del navegador.",
+              "type": "string",
+              "pattern": "^[A-Za-z_]+(/[A-Za-z0-9_+-]+)*$"
+            }
+          }
+        }
+      }
+    },
+    "booleanCell": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "BooleanCell" },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "trueLabel": { "type": "string" }, "falseLabel": { "type": "string" } }
+        }
+      }
+    },
+    "badgeCell": {
+      "type": "object",
+      "required": ["inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "BadgeCell" },
+        "inputs": {
+          "type": "object",
+          "required": ["variants"],
+          "additionalProperties": false,
+          "properties": {
+            "variants": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "object",
+                "required": ["label", "tone"],
+                "additionalProperties": false,
+                "properties": { "label": { "type": "string" }, "tone": { "$ref": "#/$defs/tone" } }
+              }
+            },
+            "fallback": {
+              "type": "object",
+              "required": ["label", "tone"],
+              "additionalProperties": false,
+              "properties": { "label": { "type": "string" }, "tone": { "$ref": "#/$defs/tone" } }
+            }
+          }
+        }
+      }
+    },
+    "linkCell": {
+      "type": "object",
+      "required": ["inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "LinkCell" },
+        "inputs": {
+          "type": "object",
+          "required": ["label", "ariaLabel", "route"],
+          "additionalProperties": false,
+          "properties": {
+            "label": { "type": "string" },
+            "ariaLabel": { "type": "string" },
+            "route": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "visibleWhen": {
+              "type": "object",
+              "required": ["field", "equals"],
+              "additionalProperties": false,
+              "properties": {
+                "field": { "$ref": "#/$defs/fieldPath" },
+                "equals": { "type": ["string", "number", "boolean", "null"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "rowCheckbox": {
+      "type": "object",
+      "required": ["inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "component": { "const": "RowCheckbox" },
+        "inputs": {
+          "type": "object",
+          "required": ["ariaLabel"],
+          "additionalProperties": false,
+          "properties": { "ariaLabel": { "type": "string", "minLength": 1 } }
+        }
+      }
+    },
+    "filter": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["component"],
+          "additionalProperties": false,
+          "properties": {
+            "component": { "const": "TextFilter" },
+            "inputs": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "placeholder": { "type": "string" },
+                "minLength": { "type": "integer", "minimum": 1, "maximum": 10 }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["component", "inputs"],
+          "additionalProperties": false,
+          "properties": {
+            "component": { "const": "SelectFilter" },
+            "inputs": {
+              "type": "object",
+              "required": ["options"],
+              "additionalProperties": false,
+              "properties": {
+                "multiple": { "type": "boolean" },
+                "options": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "object",
+                    "required": ["value", "label"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "value": { "type": ["string", "number", "boolean"] },
+                      "label": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["component"],
+          "additionalProperties": false,
+          "properties": {
+            "component": { "enum": ["DateRangeFilter", "NumberRangeFilter"] },
+            "inputs": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": { "fromLabel": { "type": "string" }, "toLabel": { "type": "string" } }
+            }
+          }
+        }
+      ]
+    },
+    "action": {
+      "oneOf": [{ "$ref": "#/$defs/downloadAction" }, { "$ref": "#/$defs/requestAction" }]
+    },
+    "downloadAction": {
+      "description": "Descarga un archivo con el orden y los filtros actuales del bloque (GET).",
+      "type": "object",
+      "required": ["id", "label", "kind", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1 },
+        "kind": { "const": "download" },
+        "path": { "$ref": "#/$defs/apiPath" },
+        "fileName": { "type": "string", "minLength": 1 },
+        "icon": { "enum": ["download"] }
+      }
+    },
+    "requestAction": {
+      "description": "Envía los ids seleccionados de un bloque: el cuerpo siempre es { \"ids\": [...] }.",
+      "type": "object",
+      "required": ["id", "label", "kind", "method", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1 },
+        "kind": { "const": "request" },
+        "method": { "enum": ["POST", "PUT", "PATCH"] },
+        "path": { "$ref": "#/$defs/apiPath" },
+        "selection": {
+          "type": "object",
+          "required": ["blockId"],
+          "additionalProperties": false,
+          "properties": {
+            "blockId": { "$ref": "#/$defs/identifier" },
+            "min": { "type": "integer", "minimum": 1, "default": 1 }
+          }
+        },
+        "successMessage": {
+          "description": "Mensaje al terminar. {count} se reemplaza por la cantidad de ids enviados.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

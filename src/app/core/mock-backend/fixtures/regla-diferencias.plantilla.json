@@ -1,0 +1,209 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "regla-diferencias",
+  "revision": "2026-11-09T00:00:00Z",
+  "title": "Diferencias de la regla",
+  "layout": { "type": "stack", "items": [{ "blockId": "diferencias" }] },
+  "actions": [
+    {
+      "id": "resolver",
+      "label": "Resolver diferencias",
+      "kind": "request",
+      "method": "POST",
+      "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos/resolver",
+      "selection": { "blockId": "diferencias", "min": 1 },
+      "successMessage": "Enviamos a resolver las diferencias seleccionadas ({count})."
+    }
+  ],
+  "blocks": [
+    {
+      "id": "diferencias",
+      "type": "table",
+      "title": "Diferencias por resolver",
+      "dataSource": {
+        "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos",
+        "pagination": { "mode": "server", "defaultPageSize": 10 },
+        "sorting": { "mode": "server", "multi": false }
+      },
+      "toolbar": {
+        "selectionSummary": true,
+        "actions": [
+          {
+            "id": "descargar",
+            "label": "Descargar reporte",
+            "kind": "download",
+            "icon": "download",
+            "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos/reporte",
+            "fileName": "diferencias-{regla}.csv"
+          }
+        ]
+      },
+      "table": {
+        "rowId": "idCaso",
+        "emptyState": {
+          "title": "No hay diferencias por resolver en esta regla.",
+          "description": "Cuando se detecten diferencias aparecerán aquí."
+        },
+        "selection": { "mode": "multi", "persistAcrossPages": true },
+        "columns": [
+          {
+            "id": "seleccion",
+            "header": {
+              "component": "SelectAllCheckbox",
+              "inputs": { "ariaLabel": "Seleccionar todas las diferencias de la página" }
+            },
+            "cell": {
+              "component": "RowCheckbox",
+              "inputs": { "ariaLabel": "Seleccionar la diferencia de {fuentePrepagoDetalleCliente.nombreCompleto}" }
+            },
+            "meta": { "width": 56 },
+            "pin": "start",
+            "enableHiding": false
+          },
+          {
+            "id": "nombreCliente",
+            "accessorKey": "fuentePrepagoDetalleCliente.nombreCompleto",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Nombre del cliente" } },
+            "cell": { "component": "TextCell", "inputs": { "emphasis": "lead", "truncate": true } },
+            "meta": { "width": 216 },
+            "enableSorting": true,
+            "sortType": "text",
+            "pin": "start",
+            "enableHiding": false
+          },
+          {
+            "id": "identificacion",
+            "accessorKey": "fuentePrepagoDetalleCliente.identificacion",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Identificación" } },
+            "cell": { "component": "TextCell" },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "alphanumeric"
+          },
+          {
+            "id": "numeroBolsillo",
+            "accessorKey": "numeroBolsillo",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Número de bolsillo" } },
+            "cell": { "component": "TextCell" },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "alphanumeric"
+          },
+          {
+            "id": "numeroGuia",
+            "accessorKey": "numeroGuia",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Número de guía" } },
+            "cell": { "component": "TextCell" },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "alphanumeric"
+          },
+          {
+            "id": "idMovimiento",
+            "accessorKey": "idMovimiento",
+            "header": { "component": "SortIndicator", "inputs": { "label": "ID Movimiento" } },
+            "cell": { "component": "TextCell" },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "alphanumeric"
+          },
+          {
+            "id": "fechaTransaccion",
+            "accessorKey": "fechaTransaccion",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Fecha de transacción" } },
+            "cell": {
+              "component": "DateCell",
+              "inputs": { "dateStyle": "short", "timeStyle": "short", "timeZone": "America/Bogota" }
+            },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "datetime"
+          },
+          {
+            "id": "estadoLogistico",
+            "accessorKey": "estadoLogistico",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Estado logístico" } },
+            "cell": { "component": "TextCell", "inputs": { "truncate": true } },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "text"
+          },
+          {
+            "id": "montoInterPay",
+            "accessorKey": "montoInterPay",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Monto Inter Pay" } },
+            "cell": { "component": "CurrencyCell", "inputs": { "currency": "COP", "maximumFractionDigits": 0 } },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "basic"
+          },
+          {
+            "id": "montoBasePagos",
+            "accessorKey": "montoBasePagos",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Monto base de pagos" } },
+            "cell": { "component": "CurrencyCell", "inputs": { "currency": "COP", "maximumFractionDigits": 0 } },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "basic"
+          },
+          {
+            "id": "diferencia",
+            "accessorKey": "diferencia",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Diferencia" } },
+            "cell": {
+              "component": "CurrencyCell",
+              "inputs": { "currency": "COP", "maximumFractionDigits": 0, "emphasis": "highlight" }
+            },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "basic"
+          },
+          {
+            "id": "motivoDiferencia",
+            "accessorKey": "motivoDiferencia",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Motivo de diferencia" } },
+            "cell": { "component": "TextCell", "inputs": { "truncate": true } },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "text"
+          },
+          {
+            "id": "estado",
+            "accessorKey": "estado",
+            "header": { "component": "SortIndicator", "inputs": { "label": "Estado" } },
+            "cell": {
+              "component": "BadgeCell",
+              "inputs": {
+                "variants": {
+                  "PENDIENTE": { "label": "Pendiente", "tone": "danger" },
+                  "EN_GESTION": { "label": "En gestión", "tone": "info" },
+                  "RESUELTO": { "label": "Resuelto", "tone": "success" }
+                },
+                "fallback": { "label": "Sin estado", "tone": "neutral" }
+              }
+            },
+            "meta": { "width": 206 },
+            "enableSorting": true,
+            "sortType": "text",
+            "pin": "end"
+          },
+          {
+            "id": "accion",
+            "header": "Acción",
+            "cell": {
+              "component": "LinkCell",
+              "inputs": {
+                "label": "Ver detalle",
+                "ariaLabel": "Ver detalle de la diferencia de {fuentePrepagoDetalleCliente.nombreCompleto}",
+                "route": ["casos", "{idCaso}"]
+              }
+            },
+            "meta": { "width": 120 },
+            "pin": "end",
+            "enableHiding": false
+          }
+        ]
+      }
+    }
+  ]
+}
