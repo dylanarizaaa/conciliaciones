@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:conciliaciones:vista-datos:1.0.0",
+  "title": "Página de datos de una tabla paramétrica",
+  "description": "Contrato del endpoint declarado en dataSource.path. Cada fila trae todos los campos que la plantilla referencia; un campo sin valor va como null.",
+  "type": "object",
+  "required": ["pageNumber", "pageSize", "totalRows", "totalPages", "rows"],
+  "additionalProperties": false,
+  "properties": {
+    "pageNumber": { "type": "integer", "minimum": 1 },
+    "pageSize": { "type": "integer", "minimum": 1 },
+    "totalRows": { "type": "integer", "minimum": 0 },
+    "totalPages": { "type": "integer", "minimum": 0 },
+    "sort": {
+      "description": "Orden realmente aplicado.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "desc"],
+        "additionalProperties": false,
+        "properties": { "id": { "type": "string" }, "desc": { "type": "boolean" } }
+      }
+    },
+    "filters": { "description": "Filtros aplicados, con la misma forma en que se enviaron.", "type": "object" },
+    "summary": {
+      "type": "object",
+      "required": ["casosTotales", "montoAfectado"],
+      "additionalProperties": false,
+      "properties": {
+        "casosTotales": { "type": "integer", "minimum": 0 },
+        "montoAfectado": { "type": "number" }
+      }
+    },
+    "rows": { "type": "array", "items": { "type": "object" } }
+  }
+}

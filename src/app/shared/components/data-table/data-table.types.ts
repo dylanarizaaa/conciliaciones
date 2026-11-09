@@ -10,6 +10,11 @@ export interface DataTableColumnMeta {
   readonly className?: string;
   /** Clases extra solo para los `<td>` (estilo del contenido, p. ej. `DATA_TABLE_CELL.lead`). */
   readonly cellClassName?: string;
+  /**
+   * `selection`: columna de checks. Si está fija, no lleva divisor propio porque forma un solo
+   * grupo con la columna siguiente ("Columnas fijas check").
+   */
+  readonly kind?: 'selection';
 }
 
 /** Clases de columna habituales según el handoff ("Casilla Info_V2"). */

@@ -13,7 +13,7 @@ import {
 } from '@angular/core';
 import { type ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCheck } from '@ng-icons/lucide';
+import { lucideCheck, lucideMinus } from '@ng-icons/lucide';
 import { BrnCheckbox } from '@spartan-ng/brain/checkbox';
 import { BrnFieldControlDescribedBy } from '@spartan-ng/brain/field';
 import type { ChangeFn, TouchFn } from '@spartan-ng/brain/forms';
@@ -31,7 +31,7 @@ export const HLM_CHECKBOX_VALUE_ACCESSOR = {
   exportAs: 'hlmCheckbox',
   imports: [BrnCheckbox, NgIcon],
   providers: [HLM_CHECKBOX_VALUE_ACCESSOR],
-  viewProviders: [provideIcons({ lucideCheck })],
+  viewProviders: [provideIcons({ lucideCheck, lucideMinus })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [BrnFieldControlDescribedBy],
   host: {
@@ -61,7 +61,7 @@ export const HLM_CHECKBOX_VALUE_ACCESSOR = {
         <span
           class="[&>ng-icon]:text-[length:--spacing(3.5)] flex items-center justify-center text-current transition-none"
         >
-          <ng-icon name="lucideCheck" />
+          <ng-icon [name]="indeterminate() ? 'lucideMinus' : 'lucideCheck'" strokeWidth="3" />
         </span>
       }
     </brn-checkbox>
@@ -72,7 +72,9 @@ export class HlmCheckbox implements ControlValueAccessor {
 
   protected readonly _computedClass = computed(() =>
     hlm(
-      'border-input dark:bg-input/30 data-checked:bg-primary data-checked:text-primary-foreground dark:data-checked:bg-primary data-checked:border-primary data-[matches-spartan-invalid=true]:aria-checked:border-primary data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 flex size-4 items-center justify-center rounded-[4px] border transition-colors group-has-disabled/field:opacity-50 focus-visible:ring-3 data-[matches-spartan-invalid=true]:ring-3 peer shrink-0 cursor-default outline-none disabled:cursor-not-allowed disabled:opacity-50',
+      // "Tabla columna check": contorno Gris complementario (3:1 sobre blanco) y, al marcar,
+      // contorno y check en Acento sin relleno.
+      'border-gris-complementario bg-card text-acento data-checked:border-acento data-[state=indeterminate]:border-acento dark:bg-input/30 data-[matches-spartan-invalid=true]:aria-checked:border-primary data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 flex size-5 items-center justify-center rounded-[4px] border-[1.5px] transition-colors group-has-disabled/field:opacity-50 focus-visible:ring-3 data-[matches-spartan-invalid=true]:ring-3 peer shrink-0 cursor-pointer outline-none disabled:cursor-not-allowed disabled:opacity-50',
       this.userClass(),
       this._errorStateClass(),
     ),
