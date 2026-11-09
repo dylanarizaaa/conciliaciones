@@ -25,8 +25,6 @@ export interface ViewTemplate {
   readonly title?: string;
   readonly layout: ViewLayout;
   readonly blocks: readonly ViewBlock[];
-  /** Acciones de la página; se pintan en el encabezado (p. ej. "Resolver diferencias"). */
-  readonly actions?: readonly ViewAction[];
 }
 
 export interface ViewLayout {
@@ -42,7 +40,6 @@ export interface TableBlock {
   readonly type: 'table';
   readonly title?: string;
   readonly dataSource: DataSource;
-  readonly toolbar?: TableToolbar;
   readonly table: TableDefinition;
 }
 
@@ -65,12 +62,6 @@ export interface DataSource {
     readonly default?: readonly ColumnSortDefinition[];
   };
   readonly filtering?: { readonly mode?: 'server' | 'client' };
-}
-
-export interface TableToolbar {
-  /** Muestra el contador "N Seleccionados". */
-  readonly selectionSummary?: boolean;
-  readonly actions?: readonly ViewAction[];
 }
 
 export interface TableSelection {
@@ -232,52 +223,6 @@ export type FilterRef =
       readonly component: 'DateRangeFilter' | 'NumberRangeFilter';
       readonly inputs?: { readonly fromLabel?: string; readonly toLabel?: string };
     };
-
-// --- Acciones ---------------------------------------------------------------------------------
-
-/** Descarga un archivo con el orden actual del bloque (GET). */
-export interface DownloadAction {
-  readonly id: string;
-  readonly label: string;
-  readonly kind: 'download';
-  readonly path: string;
-  /** Nombre del archivo; admite llaves `{param}` de la ruta. */
-  readonly fileName?: string;
-  readonly icon?: 'download';
-}
-
-/** Envía los ids seleccionados de un bloque. El cuerpo siempre es `{ "ids": [...] }`. */
-export interface RequestAction {
-  readonly id: string;
-  readonly label: string;
-  readonly kind: 'request';
-  readonly method: 'POST' | 'PUT' | 'PATCH';
-  readonly path: string;
-  readonly selection?: { readonly blockId: string; readonly min?: number };
-  /** `{count}` se reemplaza por la cantidad de ids enviados. */
-  readonly successMessage?: string;
-  /** Modal que se abre cuando el servicio responde (p. ej. "Conciliación procesada"). */
-  readonly successDialog?: ResultDialogDefinition;
-}
-
-/** Dato del modal leído de la respuesta del servicio ("Validado por: …"). */
-export interface ResultDialogDetail {
-  readonly label: string;
-  /** Campo de `resultado`; admite rutas con punto. */
-  readonly field: string;
-  /** `date` → "19/08/2026". */
-  readonly format?: 'text' | 'date';
-}
-
-export interface ResultDialogDefinition {
-  readonly title: string;
-  readonly description?: string;
-  readonly details?: readonly ResultDialogDetail[];
-  /** Texto del botón que cierra el modal; por defecto "Volver a la lista". */
-  readonly closeLabel?: string;
-}
-
-export type ViewAction = DownloadAction | RequestAction;
 
 // ---------------------------------------------------------------------------------------------
 // Datos

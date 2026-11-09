@@ -10,32 +10,28 @@
       [backLink]="canalLink"
       [backLabel]="'Volver a ' + nombreCanal()"
     >
-      @if (accionesPagina().length > 0) {
-        <!-- En el diseño el botón (56px) sobresale de la fila de la descripción (40px) sin empujar el contenido. -->
-        <div appPageHeaderActions class="md:-my-2">
-          @for (action of accionesPagina(); track action.id) {
-            @let enCurso = ejecutando() === action.id;
-            <!--
-              Mientras responde el servicio el botón queda "cargando": no se deshabilita (no pierde el
-              foco), anuncia aria-busy y la acción ignora más clics.
-            -->
-            <button
-              hlmBtn
-              type="button"
-              [disabled]="!enCurso && !puedeEjecutar(action)"
-              [attr.aria-busy]="enCurso ? 'true' : null"
-              [attr.aria-disabled]="enCurso ? 'true' : null"
-              class="aria-busy:cursor-wait aria-busy:hover:bg-negro-digital"
-              (click)="ejecutar(action)"
-            >
-              @if (enCurso) {
-                <ng-icon name="lucideLoaderCircle" class="animate-spin" data-icon="inline-start" aria-hidden="true" />
-              }
-              {{ action.label }}
-            </button>
+      <!-- En el diseño el botón (56px) sobresale de la fila de la descripción (40px) sin empujar el contenido. -->
+      <div appPageHeaderActions class="md:-my-2">
+        @let resolviendo = ejecutando() === 'resolver';
+        <!--
+          Mientras responde el servicio el botón queda "cargando": no se deshabilita (no pierde el
+          foco), anuncia aria-busy y la acción ignora más clics. Sin filas marcadas, se deshabilita.
+        -->
+        <button
+          hlmBtn
+          type="button"
+          [disabled]="!resolviendo && !puedeResolver()"
+          [attr.aria-busy]="resolviendo ? 'true' : null"
+          [attr.aria-disabled]="resolviendo ? 'true' : null"
+          class="aria-busy:cursor-wait aria-busy:hover:bg-negro-digital"
+          (click)="resolver()"
+        >
+          @if (resolviendo) {
+            <ng-icon name="lucideLoaderCircle" class="animate-spin" data-icon="inline-start" aria-hidden="true" />
           }
-        </div>
-      }
+          {{ etiquetas.resolver }}
+        </button>
+      </div>
     </app-page-header>
   }
 
@@ -59,11 +55,11 @@
             {{ bloque.title ?? 'Resultados' }}
           </h2>
 
-          @if (errorAccion(); as error) {
+          @if (errorAccion(); as accion) {
             <app-error-state
-              [title]="error.message"
+              [title]="'No pudimos completar &quot;' + etiquetas[accion] + '&quot;.'"
               description="Inténtalo de nuevo en unos segundos."
-              (retry)="ejecutar(error.action)"
+              (retry)="reintentar(accion)"
             />
           }
 
@@ -74,7 +70,7 @@
             />
           } @else {
             <div class="flex min-h-10 flex-wrap items-center gap-x-6 gap-y-2">
-              @if (bloque.toolbar?.selectionSummary && definicion()?.selectable) {
+              @if (seleccionable()) {
                 <p class="flex items-center gap-2" aria-live="polite" aria-atomic="true">
                   <span
                     class="inline-flex size-6 items-center justify-center rounded-full bg-badge-info text-xs font-semibold text-badge-info-foreground tabular-nums"
@@ -87,26 +83,18 @@
                 </p>
               }
 
-              @if (accionesBloque().length > 0) {
-                <div class="ms-auto flex flex-wrap items-center gap-6">
-                  @for (action of accionesBloque(); track action.id) {
-                    <button
-                      hlmBtn
-                      variant="link"
-                      type="button"
-                      class="h-10 px-0 text-base text-acento has-data-[icon=inline-end]:pe-0"
-                      [disabled]="!puedeEjecutar(action)"
-                      [attr.aria-busy]="ejecutando() === action.id ? 'true' : null"
-                      (click)="ejecutar(action)"
-                    >
-                      {{ action.label }}
-                      @if (action.kind === 'download') {
-                        <ng-icon name="lucideDownload" data-icon="inline-end" aria-hidden="true" />
-                      }
-                    </button>
-                  }
-                </div>
-              }
+              <button
+                hlmBtn
+                variant="link"
+                type="button"
+                class="ms-auto h-10 px-0 text-base text-acento has-data-[icon=inline-end]:pe-0"
+                [disabled]="!puedeDescargar()"
+                [attr.aria-busy]="ejecutando() === 'descargar' ? 'true' : null"
+                (click)="descargar()"
+              >
+                {{ etiquetas.descargar }}
+                <ng-icon name="lucideDownload" data-icon="inline-end" aria-hidden="true" />
+              </button>
             </div>
 
             <app-data-table
@@ -128,15 +116,15 @@
             }
           }
         </section>
-        @if (resultado(); as resultado) {
+        @if (resolucion(); as items) {
           <app-result-dialog
-            [open]="resultadoAbierto()"
-            [title]="resultado.dialogo.title"
-            [description]="resultado.dialogo.description ?? ''"
-            [items]="resultado.items"
-            [closeLabel]="resultado.dialogo.closeLabel ?? 'Volver a la lista'"
+            [open]="resolucionAbierta()"
+            title="Conciliación procesada"
+            description="Los casos resueltos saldrán de la pantalla. Aquellos que requieran una nueva validación permanecerán en estado Pendiente."
+            [items]="items"
+            closeLabel="Volver a la lista"
             restoreFocus="#diferencias-title"
-            (closed)="resultadoAbierto.set(false)"
+            (closed)="resolucionAbierta.set(false)"
           />
         }
       } @else {

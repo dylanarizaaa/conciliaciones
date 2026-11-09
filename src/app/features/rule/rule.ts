@@ -27,18 +27,11 @@ import { safeFileName, saveFile } from '../../core/browser/save-file';
 import { ProcesosService } from '../../core/data-access/procesos.service';
 import { ProyectosService } from '../../core/data-access/proyectos.service';
 import { SubprocesosService } from '../../core/data-access/subprocesos.service';
-import type {
-  DownloadAction,
-  RequestAction,
-  ResultDialogDefinition,
-  TablePageConsulta,
-  TableRow,
-  ViewAction,
-} from '../../core/data-access/vista.model';
+import type { ResolucionDiferencias } from '../../core/data-access/regla.model';
+import { ReglasService } from '../../core/data-access/reglas.service';
+import type { TablePageConsulta, TableRow } from '../../core/data-access/vista.model';
 import {
   findTableBlock,
-  getPath,
-  interpolateParams,
   leafColumnsOf,
   parseSorting,
   resolveApiPath,
@@ -84,35 +77,27 @@ const NO_PINNING = { start: [], end: [] };
 const NO_VISIBILITY = {};
 const fallbackRowId = (_: TableRow, index: number) => `fila-${index}`;
 
-/** Error de una acción (descargar, resolver) con la acción para reintentarla. */
-interface ActionError {
-  readonly action: ViewAction;
-  readonly message: string;
-}
+/** Acciones fijas de la pantalla: no vienen de la plantilla, son las mismas en todas las reglas. */
+type Accion = 'resolver' | 'descargar';
 
-/** Modal de resultado de una acción `request` con los datos de la respuesta. */
-interface ResultadoAccion {
-  readonly dialogo: ResultDialogDefinition;
-  readonly items: readonly ResultDialogItem[];
-}
+const ETIQUETAS: Readonly<Record<Accion, string>> = {
+  resolver: 'Resolver diferencias',
+  descargar: 'Descargar reporte',
+};
 
-/** Datos del modal ("Validado por", "Fecha de validación") leídos de la respuesta del servicio. */
-function resultItems(dialogo: ResultDialogDefinition, respuesta: unknown): ResultDialogItem[] {
-  return (dialogo.details ?? []).flatMap((detail) => {
-    const value = getPath(respuesta, detail.field);
-    if (detail.format === 'date') {
-      const date = toDate(value);
-      return date ? [{ label: detail.label, value: formatDateTime(date, { dateStyle: 'medium' }) }] : [];
-    }
-    return value === null || value === undefined || value === ''
-      ? []
-      : [{ label: detail.label, value: String(value) }];
-  });
+/** Datos del modal "Conciliación procesada" leídos de la respuesta del servicio. */
+function resolucionItems(respuesta: ResolucionDiferencias): ResultDialogItem[] {
+  const fecha = toDate(respuesta?.fechaValidacion);
+  return [
+    ...(respuesta?.validadoPor ? [{ label: 'Validado por', value: respuesta.validadoPor }] : []),
+    ...(fecha ? [{ label: 'Fecha de validación', value: formatDateTime(fecha, { dateStyle: 'medium' }) }] : []),
+  ];
 }
 
 /**
- * Pantalla de una regla: casos con diferencias por resolver. La tabla, sus acciones y la fuente
- * de datos vienen de la plantilla del back (contrato en `docs/contrato-vista`).
+ * Pantalla de una regla: casos con diferencias por resolver. La tabla y su fuente de datos vienen
+ * de la plantilla del back (contrato en `docs/contrato-vista`); las acciones "Resolver diferencias"
+ * y "Descargar reporte" son fijas de la pantalla.
  */
 @Component({
   selector: 'app-rule',
@@ -145,6 +130,7 @@ export class Rule {
   private readonly procesosService = inject(ProcesosService);
   private readonly subprocesosService = inject(SubprocesosService);
   private readonly vistas = inject(VistasService);
+  private readonly reglas = inject(ReglasService);
 
   /** Parámetros de ruta `:proyectoId`, `:procesoId`, `:subProcesoId` y `:regla`. */
   readonly proyectoId = input.required<string>();
@@ -375,22 +361,29 @@ export class Rule {
     return '';
   });
 
-  // --- Acciones de la plantilla ---------------------------------------------------------------
+  // --- Acciones de la pantalla ---------------------------------------------------------------
 
-  /** Acciones del encabezado (p. ej. "Resolver diferencias"). */
-  protected readonly accionesPagina = computed(() => resourceValue(this.plantilla)?.actions ?? []);
-  /** Acciones de la barra de la tabla (p. ej. "Descargar reporte"). */
-  protected readonly accionesBloque = computed(() => this.bloque()?.toolbar?.actions ?? []);
-
-  /** Id de la acción en curso. */
-  protected readonly ejecutando = signal<string | null>(null);
+  protected readonly etiquetas = ETIQUETAS;
+  /** Acción en curso. */
+  protected readonly ejecutando = signal<Accion | null>(null);
   /** Resultado de la última acción, para lectores de pantalla. */
   protected readonly mensajeAccion = signal('');
-  protected readonly errorAccion = signal<ActionError | null>(null);
+  /** Acción que falló, para mostrar el error y reintentarla. */
+  protected readonly errorAccion = signal<Accion | null>(null);
 
-  /** Contenido del modal de resultado (se conserva al cerrarlo para la animación de salida). */
-  protected readonly resultado = signal<ResultadoAccion | null>(null);
-  protected readonly resultadoAbierto = signal(false);
+  /** La plantilla trae selección de filas (columna de checks). */
+  protected readonly seleccionable = computed(() => this.definicion()?.selectable ?? false);
+  /** "Resolver diferencias" necesita al menos una fila marcada. */
+  protected readonly puedeResolver = computed(
+    () => this.ejecutando() === null && this.selectedIds().length > 0,
+  );
+  protected readonly puedeDescargar = computed(
+    () => this.ejecutando() === null && this.bloque() !== undefined,
+  );
+
+  /** Datos del modal "Conciliación procesada" (se conservan al cerrarlo para la animación). */
+  protected readonly resolucion = signal<readonly ResultDialogItem[] | null>(null);
+  protected readonly resolucionAbierta = signal(false);
 
   constructor() {
     // Si la página pedida ya no existe (p. ej. ?pagina=99), lleva a la última disponible.
@@ -400,30 +393,52 @@ export class Rule {
         this.goToPage(pagina.totalPages, true);
       }
     });
+
+    // Sin columna de checks no hay selección y "Resolver diferencias" queda deshabilitado:
+    // es un error de configuración de la plantilla, se avisa para detectarlo pronto.
+    effect(() => {
+      const definicion = this.definicion();
+      if (definicion && !definicion.selectable) {
+        console.warn(
+          `[Regla] La plantilla de "${this.regla()}" no trae selección de filas ` +
+            '(table.selection + RowCheckbox): "Resolver diferencias" queda deshabilitado.',
+        );
+      }
+    });
   }
 
-  /** Una acción que envía la selección necesita el mínimo de filas marcadas en su bloque. */
-  protected puedeEjecutar(action: ViewAction): boolean {
-    if (this.ejecutando() !== null) {
-      return false;
-    }
-    if (action.kind !== 'request' || !action.selection) {
-      return true;
-    }
-    const { blockId, min = 1 } = action.selection;
-    return blockId === this.bloque()?.id && this.selectedIds().length >= min;
-  }
-
-  protected ejecutar(action: ViewAction): void {
-    if (!this.puedeEjecutar(action)) {
+  /** Envía los casos seleccionados; al responder abre el modal "Conciliación procesada". */
+  protected resolver(): void {
+    if (!this.puedeResolver()) {
       return;
     }
-    this.errorAccion.set(null);
-    this.mensajeAccion.set('');
-    if (action.kind === 'download') {
-      this.descargar(action);
+    const ids = this.selectedIds();
+    this.run('resolver', this.reglas.resolverDiferencias(this.subProcesoId(), this.regla(), ids), (respuesta) => {
+      this.rowSelection.set({});
+      this.datos.reload();
+      // El modal se anuncia solo (rol dialog + título); no hace falta el mensaje de estado.
+      this.resolucion.set(resolucionItems(respuesta));
+      this.resolucionAbierta.set(true);
+    });
+  }
+
+  /** Descarga el reporte con el orden actual de la tabla. */
+  protected descargar(): void {
+    if (!this.puedeDescargar()) {
+      return;
+    }
+    const fileName = safeFileName(`diferencias-${this.regla()}.csv`, 'diferencias');
+    this.run('descargar', this.reglas.descargarReporte(this.subProcesoId(), this.regla(), this.sorting()), (blob) => {
+      saveFile(this.document, blob, fileName);
+      this.mensajeAccion.set(`Descargamos el archivo ${fileName}.`);
+    });
+  }
+
+  protected reintentar(accion: Accion): void {
+    if (accion === 'resolver') {
+      this.resolver();
     } else {
-      this.enviar(action);
+      this.descargar();
     }
   }
 
@@ -457,63 +472,15 @@ export class Rule {
     });
   }
 
-  private enviar(action: RequestAction): void {
-    const ids = this.selectedIds();
-    this.run(
-      action,
-      () => this.vistas.enviar(action, resolveApiPath(action.path, this.pathParams()), ids),
-      (respuesta) => {
-        this.rowSelection.set({});
-        this.datos.reload();
-        const dialogo = action.successDialog;
-        if (dialogo) {
-          // El modal se anuncia solo (rol dialog + título); no hace falta el mensaje de estado.
-          this.resultado.set({ dialogo, items: resultItems(dialogo, respuesta) });
-          this.resultadoAbierto.set(true);
-        } else {
-          const mensaje = action.successMessage ?? `${action.label}: listo.`;
-          this.mensajeAccion.set(mensaje.replace(/\{count\}/g, String(ids.length)));
-        }
-      },
-    );
-  }
-
-  private descargar(action: DownloadAction): void {
-    const fileName = safeFileName(
-      interpolateParams(action.fileName ?? `${action.id}.csv`, this.pathParams()),
-      action.id,
-    );
-    this.run(
-      action,
-      () => this.vistas.descargar(resolveApiPath(action.path, this.pathParams()), this.sorting()),
-      (blob) => {
-        saveFile(this.document, blob as Blob, fileName);
-        this.mensajeAccion.set(`Descargamos el archivo ${fileName}.`);
-      },
-    );
-  }
-
-  /** Ejecuta la petición de una acción; cualquier error (también de la plantilla) se muestra. */
-  private run(
-    action: ViewAction,
-    request: () => Observable<unknown>,
-    onSuccess: (value: unknown) => void,
-  ): void {
-    const fail = () =>
-      this.errorAccion.set({ action, message: `No pudimos completar "${action.label}".` });
-    let peticion: Observable<unknown>;
-    try {
-      peticion = request();
-    } catch {
-      fail();
-      return;
-    }
-    this.ejecutando.set(action.id);
-    peticion
+  private run<T>(accion: Accion, request: Observable<T>, onSuccess: (value: T) => void): void {
+    this.errorAccion.set(null);
+    this.mensajeAccion.set('');
+    this.ejecutando.set(accion);
+    request
       .pipe(
         finalize(() => this.ejecutando.set(null)),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe({ next: onSuccess, error: fail });
+      .subscribe({ next: onSuccess, error: () => this.errorAccion.set(accion) });
   }
 }

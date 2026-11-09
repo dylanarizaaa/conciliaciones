@@ -5,7 +5,6 @@ import { API_BASE_URL } from '../config/api-base-url';
 import { type ApiResponse, unwrapApiResponse } from '../http/api-response';
 import type {
   ColumnSortDefinition,
-  RequestAction,
   TablePage,
   TablePageConsulta,
   ViewTemplate,
@@ -20,7 +19,7 @@ export interface TablePageQuery {
   readonly sort: readonly ColumnSortDefinition[];
 }
 
-/** Endpoints de la vista paramétrica: plantilla, datos de cada bloque y acciones. */
+/** Endpoints de la vista paramétrica: plantilla y datos de cada bloque. */
 @Injectable({ providedIn: 'root' })
 export class VistasService {
   private readonly http = inject(HttpClient);
@@ -58,21 +57,6 @@ export class VistasService {
         return { ...pagina, rows: pagina.rows ?? [], consultadoEn: new Date() };
       }),
     );
-  }
-
-  /** Descarga el archivo de una acción `download` con el orden actual del bloque. */
-  descargar(path: string, sort: readonly ColumnSortDefinition[]): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}${path}`, {
-      params: this.sortParams(sort),
-      responseType: 'blob',
-    });
-  }
-
-  /** Ejecuta una acción `request` con los ids seleccionados: el cuerpo es `{ ids }`. */
-  enviar(action: RequestAction, path: string, ids: readonly string[]): Observable<unknown> {
-    return this.http
-      .request<ApiResponse<unknown>>(action.method, `${this.baseUrl}${path}`, { body: { ids } })
-      .pipe(map((response) => unwrapApiResponse(response)));
   }
 
   private sortParams(sort: readonly ColumnSortDefinition[]): HttpParams {

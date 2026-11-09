@@ -12,12 +12,7 @@
     "revision": { "type": "string" },
     "title": { "type": "string" },
     "layout": { "$ref": "#/$defs/layout" },
-    "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/block" } },
-    "actions": {
-      "description": "Acciones de la página (se pintan en el encabezado, p. ej. \"Resolver diferencias\").",
-      "type": "array",
-      "items": { "$ref": "#/$defs/action" }
-    }
+    "blocks": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/block" } }
   },
   "$defs": {
     "identifier": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]*$" },
@@ -58,7 +53,6 @@
         "type": { "const": "table" },
         "title": { "type": "string" },
         "dataSource": { "$ref": "#/$defs/dataSource" },
-        "toolbar": { "$ref": "#/$defs/toolbar" },
         "table": { "$ref": "#/$defs/table" }
       }
     },
@@ -103,15 +97,6 @@
           "additionalProperties": false,
           "properties": { "mode": { "enum": ["server", "client"], "default": "server" } }
         }
-      }
-    },
-    "toolbar": {
-      "description": "Barra sobre la tabla: contador de seleccionados y acciones del bloque (p. ej. \"Descargar reporte\").",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "selectionSummary": { "type": "boolean", "default": false },
-        "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } }
       }
     },
     "table": {
@@ -501,73 +486,6 @@
           }
         }
       ]
-    },
-    "action": {
-      "oneOf": [{ "$ref": "#/$defs/downloadAction" }, { "$ref": "#/$defs/requestAction" }]
-    },
-    "downloadAction": {
-      "description": "Descarga un archivo con el orden y los filtros actuales del bloque (GET).",
-      "type": "object",
-      "required": ["id", "label", "kind", "path"],
-      "additionalProperties": false,
-      "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "label": { "type": "string", "minLength": 1 },
-        "kind": { "const": "download" },
-        "path": { "$ref": "#/$defs/apiPath" },
-        "fileName": { "type": "string", "minLength": 1 },
-        "icon": { "enum": ["download"] }
-      }
-    },
-    "requestAction": {
-      "description": "Envía los ids seleccionados de un bloque: el cuerpo siempre es { \"ids\": [...] }.",
-      "type": "object",
-      "required": ["id", "label", "kind", "method", "path"],
-      "additionalProperties": false,
-      "properties": {
-        "id": { "$ref": "#/$defs/identifier" },
-        "label": { "type": "string", "minLength": 1 },
-        "kind": { "const": "request" },
-        "method": { "enum": ["POST", "PUT", "PATCH"] },
-        "path": { "$ref": "#/$defs/apiPath" },
-        "selection": {
-          "type": "object",
-          "required": ["blockId"],
-          "additionalProperties": false,
-          "properties": {
-            "blockId": { "$ref": "#/$defs/identifier" },
-            "min": { "type": "integer", "minimum": 1, "default": 1 }
-          }
-        },
-        "successMessage": {
-          "description": "Mensaje al terminar. {count} se reemplaza por la cantidad de ids enviados.",
-          "type": "string"
-        },
-        "successDialog": {
-          "description": "Modal que se abre cuando el servicio responde. Los detalles leen campos de la respuesta (resultado).",
-          "type": "object",
-          "required": ["title"],
-          "additionalProperties": false,
-          "properties": {
-            "title": { "type": "string", "minLength": 1 },
-            "description": { "type": "string" },
-            "details": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "required": ["label", "field"],
-                "additionalProperties": false,
-                "properties": {
-                  "label": { "type": "string", "minLength": 1 },
-                  "field": { "$ref": "#/$defs/fieldPath" },
-                  "format": { "enum": ["text", "date"], "default": "text" }
-                }
-              }
-            },
-            "closeLabel": { "type": "string", "minLength": 1 }
-          }
-        }
-      }
     }
   }
 }
