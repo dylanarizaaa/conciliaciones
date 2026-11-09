@@ -38,12 +38,6 @@
             "port": 0
           }
         },
-        "test": {
-          "builder": "@angular/build:unit-test",
-          "options": {
-            "buildTarget": "conciliaciones:esbuild:development"
-          }
-        },
         "esbuild": {
           "builder": "@angular/build:application",
           "options": {

@@ -171,7 +171,7 @@ describe('buildTemplateTable', () => {
   });
 
   it('pinta como texto un componente fuera del catálogo y lo avisa en consola', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const built = buildTemplateTable({
       rowId: 'id',
       columns: [
