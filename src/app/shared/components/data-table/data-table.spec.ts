@@ -78,10 +78,12 @@ class AutoLayoutHost {
   }));
 }
 
+const originalResizeObserver = globalThis.ResizeObserver;
+
 describe('DataTable', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
     Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
       configurable: true,
       get(this: HTMLElement) {
@@ -97,7 +99,7 @@ describe('DataTable', () => {
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    globalThis.ResizeObserver = originalResizeObserver;
     // Vuelven las implementaciones de jsdom (heredadas de Element).
     delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
     delete (HTMLElement.prototype as { scrollWidth?: number }).scrollWidth;

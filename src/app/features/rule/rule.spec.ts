@@ -323,7 +323,7 @@ describe('Rule', () => {
   });
 
   it('sin columna de checks en la plantilla, "Resolver diferencias" queda deshabilitado y se avisa', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const [bloque] = PLANTILLA_REGLA.blocks;
     const sinSeleccion: ViewTemplate = {
       ...PLANTILLA_REGLA,
@@ -424,12 +424,12 @@ describe('Rule', () => {
   });
 
   it('descarga el reporte con el nombre de la plantilla', async () => {
-    const createObjectURL = vi.fn(() => 'blob:reporte');
-    const revokeObjectURL = vi.fn();
+    const createObjectURL = jest.fn(() => 'blob:reporte');
+    const revokeObjectURL = jest.fn();
     Object.defineProperty(window.URL, 'createObjectURL', { configurable: true, value: createObjectURL });
     Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
     const descargas: string[] = [];
-    const click = vi
+    const click = jest
       .spyOn(HTMLAnchorElement.prototype, 'click')
       .mockImplementation(function (this: HTMLAnchorElement) {
         descargas.push(this.download);

@@ -38,11 +38,15 @@ This will compile your project and store the build artifacts in the `dist/` dire
 
 ## Running unit tests
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+Las pruebas unitarias usan [Jest](https://jestjs.io/) con [jest-preset-angular](https://thymikee.github.io/jest-preset-angular/) (configuración en `jest.config.js` y `setup-jest.ts`):
 
 ```bash
-ng test
+npm test               # todas las pruebas
+npm run test:watch     # modo observación
+npm run test:coverage  # con cobertura en coverage/
 ```
+
+Solo se ejecutan y miden los `*.spec.ts` de `src/`. Los componentes de spartan.ng en `libs/` quedan fuera de las pruebas y de la cobertura.
 
 ## Running end-to-end tests
 
