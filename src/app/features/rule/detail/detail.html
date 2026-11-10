@@ -1,1 +1,35 @@
-<p>detail works!</p>
+<div class="mx-auto box-content flex max-w-[1240px] flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+  @if (headerLoading()) {
+    <app-page-header-skeleton showBack />
+  } @else {
+    <app-page-header
+      title="Detalle de la diferencia"
+      description="Compara la información de la diferencia detectada entre las diferentes plataformas"
+      [breadcrumbs]="breadcrumbs()"
+      showBack
+      [backLink]="reglaLink"
+      [backLabel]="'Volver a ' + regla()"
+    />
+  }
+
+  <p class="sr-only" role="status">{{ plantilla.isLoading() ? 'Cargando el detalle…' : '' }}</p>
+
+  @if (hasError()) {
+    <app-error-state title="No pudimos cargar el detalle de esta diferencia." (retry)="reload()" />
+  } @else if (plantilla.hasValue()) {
+    <!-- La plantilla decide qué bloques hay y en qué orden (layout de tipo "stack"). -->
+    @for (bloque of bloquesLayout(); track bloque.id) {
+      <app-view-block [block]="bloque" [blocks]="bloques()" [params]="pathParams()" />
+    } @empty {
+      <app-empty-state title="Esta vista aún no tiene contenido configurado." />
+    }
+  } @else {
+    <!-- La plantilla aún no llega: no se conocen los bloques. -->
+    <div class="flex flex-col gap-6" aria-hidden="true">
+      <hlm-skeleton class="h-4 w-48 bg-foreground/10" />
+      <hlm-skeleton class="h-48 w-full rounded-card bg-foreground/5" />
+      <hlm-skeleton class="h-10 w-56 bg-foreground/10" />
+      <hlm-skeleton class="h-64 w-full rounded-lg bg-foreground/5" />
+    </div>
+  }
+</div>

@@ -18,6 +18,7 @@ import { classes } from '@spartan-ng/helm/utils';
 })
 export class HlmAccordionItem {
   constructor() {
-    classes(() => 'not-last:border-b flex flex-col');
+    // La línea divisoria va bajo el título (ver HlmAccordionTrigger), no bajo el contenido.
+    classes(() => 'flex flex-col');
   }
 }

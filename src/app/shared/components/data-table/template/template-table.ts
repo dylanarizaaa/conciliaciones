@@ -22,19 +22,14 @@ import {
   type HeaderRef,
   isGroupColumn,
   type LeafColumnDefinition,
-  type NumberCellInputs,
   type TableDefinition,
   type TableRow,
 } from '../../../../core/data-access/vista.model';
 import { getPath, interpolateRow, leafColumnsOf } from '../../../../core/data-access/vista.utils';
-import { BadgeCell } from '../cells/badge-cell';
-import { BooleanCell } from '../cells/boolean-cell';
-import { DateCell } from '../cells/date-cell';
 import { LinkCell } from '../cells/link-cell';
-import { CurrencyCell, NumberCell, PercentCell } from '../cells/number-cells';
 import { RowCheckbox, SelectAllCheckbox } from '../cells/selection-cells';
 import { SortHeaderCell } from '../cells/sort-header-cell';
-import { TextCell } from '../cells/text-cell';
+import { valueCellResolver } from '../cells/value-cell';
 import type { DataTableColumnMeta } from '../data-table.types';
 
 /**
@@ -159,78 +154,6 @@ function headerRenderer(header: HeaderRef): string | (() => unknown) {
 
 function cellRenderer(cell: CellRef): (context: TemplateCellContext) => unknown {
   switch (cell.component) {
-    case 'TextCell': {
-      const inputs = cell.inputs ?? {};
-      return (context) =>
-        flexRenderComponent(TextCell, {
-          inputs: {
-            value: context.getValue(),
-            emphasis: inputs.emphasis ?? 'default',
-            truncate: inputs.truncate ?? false,
-            secondary: inputs.secondaryAccessorKey
-              ? getPath(context.row.original, inputs.secondaryAccessorKey)
-              : null,
-          },
-        });
-    }
-    case 'NumberCell': {
-      const inputs = cell.inputs ?? {};
-      return (context) =>
-        flexRenderComponent(NumberCell, { inputs: numericInputs(context, inputs) });
-    }
-    case 'PercentCell': {
-      const inputs = cell.inputs ?? {};
-      return (context) =>
-        flexRenderComponent(PercentCell, { inputs: numericInputs(context, inputs) });
-    }
-    case 'CurrencyCell': {
-      const inputs = cell.inputs ?? {};
-      return (context) => {
-        const fromRow = inputs.currencyField
-          ? getPath(context.row.original, inputs.currencyField)
-          : undefined;
-        return flexRenderComponent(CurrencyCell, {
-          inputs: {
-            value: context.getValue(),
-            emphasis: inputs.emphasis ?? 'default',
-            currency: typeof fromRow === 'string' && fromRow ? fromRow : (inputs.currency ?? 'COP'),
-            signDisplay: inputs.signDisplay ?? 'auto',
-            minimumFractionDigits: inputs.minimumFractionDigits,
-            maximumFractionDigits: inputs.maximumFractionDigits,
-          },
-        });
-      };
-    }
-    case 'DateCell': {
-      const inputs = cell.inputs ?? {};
-      return (context) =>
-        flexRenderComponent(DateCell, {
-          inputs: {
-            value: context.getValue(),
-            dateStyle: inputs.dateStyle,
-            timeStyle: inputs.timeStyle,
-            timeZone: inputs.timeZone,
-          },
-        });
-    }
-    case 'BooleanCell': {
-      const inputs = cell.inputs ?? {};
-      return (context) =>
-        flexRenderComponent(BooleanCell, {
-          inputs: {
-            value: context.getValue(),
-            trueLabel: inputs.trueLabel ?? 'Sí',
-            falseLabel: inputs.falseLabel ?? 'No',
-          },
-        });
-    }
-    case 'BadgeCell': {
-      const { variants, fallback } = cell.inputs;
-      return (context) =>
-        flexRenderComponent(BadgeCell, {
-          inputs: { value: context.getValue(), variants, fallback },
-        });
-    }
     case 'LinkCell': {
       const { label, ariaLabel, route, visibleWhen } = cell.inputs;
       return (context) => {
@@ -254,26 +177,15 @@ function cellRenderer(cell: CellRef): (context: TemplateCellContext) => unknown 
           inputs: { ariaLabel: interpolateRow(ariaLabel, context.row.original) },
         });
     }
-    default:
-      return unknownCell(cell);
+    default: {
+      // Celdas que solo muestran un valor: el mismo catálogo de las listas de campos.
+      const resolve = valueCellResolver(cell);
+      return (context) => {
+        const { component, inputs } = resolve(context.getValue(), context.row.original);
+        return flexRenderComponent(component, { inputs });
+      };
+    }
   }
-}
-
-function numericInputs(context: TemplateCellContext, inputs: NumberCellInputs) {
-  return {
-    value: context.getValue(),
-    emphasis: inputs.emphasis ?? 'default',
-    minimumFractionDigits: inputs.minimumFractionDigits,
-    maximumFractionDigits: inputs.maximumFractionDigits,
-  } as const;
-}
-
-/** Degradación segura: un componente fuera del catálogo se pinta como texto. */
-function unknownCell(cell: never): (context: TemplateCellContext) => unknown {
-  console.warn(
-    `[tabla paramétrica] Componente de celda desconocido "${(cell as { component?: unknown }).component}"; se usa TextCell.`,
-  );
-  return cellRenderer({ component: 'TextCell' });
 }
 
 function unknownHeader(header: never): string {

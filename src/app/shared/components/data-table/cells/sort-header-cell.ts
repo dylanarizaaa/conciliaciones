@@ -18,7 +18,7 @@ import { injectTableHeaderContext } from '@tanstack/angular-table';
     @if (canSort()) {
       <button
         type="button"
-        class="-mx-1 inline-flex cursor-pointer items-center gap-1 rounded-sm px-1 py-0.5 transition-colors outline-none hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+        class="-mx-1 inline-flex cursor-pointer items-center gap-1 rounded-sm px-1 py-0.5 transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
         [class.text-foreground]="direction()"
         (click)="toggle($event)"
       >

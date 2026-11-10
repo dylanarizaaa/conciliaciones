@@ -34,7 +34,7 @@ export class HlmBreadcrumbLink {
   constructor() {
     classes(
       () =>
-        'rounded-sm underline-offset-2 transition-colors outline-none hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+        'rounded-sm underline-offset-2 transition-colors hover:text-foreground hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
     );
   }
 }

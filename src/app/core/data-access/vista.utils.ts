@@ -6,6 +6,7 @@ import {
   type LeafColumnDefinition,
   type TableBlock,
   type TableRow,
+  type ViewBlock,
   type ViewTemplate,
 } from './vista.model';
 
@@ -66,10 +67,14 @@ export function parseSorting(value: string | null | undefined): ColumnSortDefini
 }
 
 /**
- * Comprueba que la plantilla sea de una versión que el front entiende y que traiga al menos un
- * bloque de tabla. Si no, lanza un `ApiError` para que la pantalla muestre el estado de error.
+ * Comprueba que la plantilla sea de una versión que el front entiende y que traiga bloques (o, si
+ * se indica `requiredBlock`, al menos uno de ese tipo). Si no, lanza un `ApiError` para que la
+ * pantalla muestre el estado de error.
  */
-export function assertSupportedTemplate(template: ViewTemplate): ViewTemplate {
+export function assertSupportedTemplate(
+  template: ViewTemplate,
+  requiredBlock?: ViewBlock['type'],
+): ViewTemplate {
   const major = Number.parseInt(template?.schemaVersion?.split('.')[0] ?? '', 10);
   if (major !== SUPPORTED_SCHEMA_MAJOR) {
     throw new ApiError(
@@ -78,10 +83,27 @@ export function assertSupportedTemplate(template: ViewTemplate): ViewTemplate {
       [],
     );
   }
-  if (!Array.isArray(template.blocks) || !template.blocks.some((block) => block.type === 'table')) {
+  const blocks = Array.isArray(template.blocks) ? template.blocks : [];
+  if (blocks.length === 0) {
+    throw new ApiError('La plantilla no trae ningún bloque para mostrar.', 0, []);
+  }
+  if (requiredBlock === 'table' && !blocks.some((block) => block.type === 'table')) {
     throw new ApiError('La plantilla no trae ninguna tabla para mostrar.', 0, []);
   }
   return template;
+}
+
+/** Bloques de primer nivel en el orden del layout (sin los `blockId` que no existen). */
+export function layoutBlocks(template: ViewTemplate): ViewBlock[] {
+  const byId = new Map(template.blocks.map((block) => [block.id, block]));
+  return (template.layout?.items ?? [])
+    .map((item) => byId.get(item.blockId))
+    .filter((block): block is ViewBlock => block !== undefined);
+}
+
+/** El valor cuenta como "sin dato": `null`, `undefined` o texto vacío. */
+export function isEmptyValue(value: unknown): boolean {
+  return value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
 }
 
 /** Columnas hoja (las que pintan celdas) en orden, recorriendo los grupos. */

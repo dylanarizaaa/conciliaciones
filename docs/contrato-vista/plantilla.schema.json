@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:conciliaciones:vista:1.0.0",
+  "$id": "urn:conciliaciones:vista:1.1.0",
   "title": "Plantilla de vista paramétrica",
-  "description": "Contrato del endpoint de plantilla. Describe qué bloques pinta la vista y cómo se configura cada tabla (TanStack Table v9).",
+  "description": "Contrato del endpoint de plantilla. Describe qué bloques pinta la vista (tablas con TanStack Table v9 y, desde la 1.1, acordeones y pestañas) y cómo se configura cada uno.",
   "type": "object",
   "required": ["schemaVersion", "id", "layout", "blocks"],
   "additionalProperties": false,
@@ -43,7 +43,150 @@
         }
       }
     },
-    "block": { "oneOf": [{ "$ref": "#/$defs/tableBlock" }] },
+    "block": {
+      "description": "Los bloques nombrados en layout.items se pintan en ese orden. Un bloque que no está en el layout solo se pinta si otro lo referencia (p. ej. tabs[].blockId).",
+      "type": "object",
+      "required": ["type"],
+      "properties": { "type": { "enum": ["table", "accordion", "tabs"] } },
+      "oneOf": [
+        { "$ref": "#/$defs/tableBlock" },
+        { "$ref": "#/$defs/accordionBlock" },
+        { "$ref": "#/$defs/tabsBlock" }
+      ]
+    },
+    "emptyState": {
+      "type": "object",
+      "required": ["title"],
+      "additionalProperties": false,
+      "properties": { "title": { "type": "string" }, "description": { "type": "string" } }
+    },
+    "recordSource": {
+      "description": "Fuente de un registro único: el endpoint devuelve un objeto (no una página).",
+      "type": "object",
+      "required": ["path"],
+      "additionalProperties": false,
+      "properties": { "path": { "$ref": "#/$defs/apiPath" } }
+    },
+    "accordionBlock": {
+      "description": "Acordeones (v1.1). Todos leen el mismo registro (dataSource); cada uno muestra una lista de campos.",
+      "type": "object",
+      "required": ["id", "type", "dataSource", "accordion"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": { "const": "accordion" },
+        "title": {
+          "description": "Título de la sección. Admite plantillas {campo} del registro.",
+          "type": "string"
+        },
+        "dataSource": { "$ref": "#/$defs/recordSource" },
+        "accordion": {
+          "type": "object",
+          "required": ["items"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "description": "multiple: varios abiertos a la vez. single: al abrir uno se cierra el otro.",
+              "enum": ["single", "multiple"],
+              "default": "multiple"
+            },
+            "columns": {
+              "description": "En pantallas anchas los acordeones se reparten en orden: la primera mitad en la columna izquierda y el resto en la derecha.",
+              "enum": [1, 2],
+              "default": 1
+            },
+            "items": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/accordionItem" } }
+          }
+        }
+      }
+    },
+    "accordionItem": {
+      "type": "object",
+      "required": ["id", "title", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "title": { "type": "string", "minLength": 1 },
+        "defaultOpen": { "type": "boolean", "default": false },
+        "content": { "$ref": "#/$defs/fieldList" }
+      }
+    },
+    "fieldList": {
+      "description": "Pares etiqueta / valor leídos del registro. Si ningún campo trae dato se muestra emptyState.",
+      "type": "object",
+      "required": ["fields"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "description": "Admite plantillas {campo} del registro, p. ej. \"Número de guía: {pagoEnCasa.numeroGuia}\".",
+          "type": "string"
+        },
+        "emptyState": { "$ref": "#/$defs/emptyState" },
+        "fields": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/field" } }
+      }
+    },
+    "field": {
+      "type": "object",
+      "required": ["id", "label", "accessorKey"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "label": { "type": "string", "minLength": 1 },
+        "accessorKey": { "$ref": "#/$defs/fieldPath" },
+        "cell": { "$ref": "#/$defs/valueCell" }
+      }
+    },
+    "valueCell": {
+      "description": "Celdas que solo muestran un valor (las mismas del catálogo de la tabla, sin LinkCell ni RowCheckbox). Si falta, se usa TextCell.",
+      "type": "object",
+      "required": ["component"],
+      "properties": {
+        "component": {
+          "enum": ["TextCell", "NumberCell", "CurrencyCell", "PercentCell", "DateCell", "BooleanCell", "BadgeCell"]
+        }
+      },
+      "oneOf": [
+        { "$ref": "#/$defs/textCell" },
+        { "$ref": "#/$defs/numberCell" },
+        { "$ref": "#/$defs/currencyCell" },
+        { "$ref": "#/$defs/percentCell" },
+        { "$ref": "#/$defs/dateCell" },
+        { "$ref": "#/$defs/booleanCell" },
+        { "$ref": "#/$defs/badgeCell" }
+      ]
+    },
+    "tabsBlock": {
+      "description": "Pestañas (v1.1). Cada pestaña muestra otro bloque de la plantilla.",
+      "type": "object",
+      "required": ["id", "type", "tabs"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": { "const": "tabs" },
+        "defaultTab": {
+          "description": "id de la pestaña abierta al entrar. Por defecto, la primera habilitada.",
+          "$ref": "#/$defs/identifier"
+        },
+        "tabs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "label", "blockId"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "$ref": "#/$defs/identifier" },
+              "label": { "type": "string", "minLength": 1 },
+              "blockId": {
+                "description": "id del bloque que se pinta dentro de la pestaña. Ese bloque no va en layout.items.",
+                "$ref": "#/$defs/identifier"
+              },
+              "disabled": { "type": "boolean", "default": false }
+            }
+          }
+        }
+      }
+    },
     "tableBlock": {
       "type": "object",
       "required": ["id", "type", "dataSource", "table"],
@@ -66,7 +209,11 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "mode": { "enum": ["server", "none"], "default": "server" },
+            "mode": {
+              "description": "server: el front envía pageNumber y pageSize. none: no los envía y el back devuelve todas las filas.",
+              "enum": ["server", "none"],
+              "default": "server"
+            },
             "defaultPageSize": { "type": "integer", "minimum": 1, "maximum": 100, "default": 10 },
             "pageSizeOptions": {
               "type": "array",
@@ -106,12 +253,7 @@
       "properties": {
         "rowId": { "$ref": "#/$defs/fieldPath" },
         "density": { "enum": ["default", "compact"], "default": "default" },
-        "emptyState": {
-          "type": "object",
-          "required": ["title"],
-          "additionalProperties": false,
-          "properties": { "title": { "type": "string" }, "description": { "type": "string" } }
-        },
+        "emptyState": { "$ref": "#/$defs/emptyState" },
         "selection": {
           "description": "Selección de filas. Se identifica cada fila por rowId, así que la selección sobrevive al orden y a la paginación.",
           "type": "object",

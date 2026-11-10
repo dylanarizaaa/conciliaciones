@@ -1,0 +1,45 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "idCaso": "CASO-3452",
+    "fuentePrepagoDetalleCliente": {
+      "nombreCompleto": "Juan Pablo Rodríguez",
+      "identificacion": "1.045.678.902"
+    },
+    "pagoEnCasa": {
+      "numeroGuia": "70002333336",
+      "estado": "Entregado",
+      "recaudo": 6200000,
+      "diferencia": 3100000
+    },
+    "alcarrito": {
+      "numeroGuia": "70002333336",
+      "estado": "Entregado",
+      "recaudo": 3100000,
+      "diferencia": 0
+    },
+    "novasoft": null,
+    "controller": {
+      "numeroGuia": "70002333336",
+      "concepto1": "Valor concepto 1",
+      "concepto2": "Valor concepto 2",
+      "concepto3": "Valor concepto 3"
+    },
+    "mitiMiti": {
+      "numeroGuia": "70002333336",
+      "estado": "En distribución",
+      "recaudo": 3100000,
+      "diferencia": 0
+    },
+    "app": {
+      "numeroGuia": "70002333336",
+      "estado": "Entregado",
+      "recaudo": 3100000,
+      "diferencia": 0
+    }
+  }
+}

@@ -324,6 +324,9 @@ describe('Rule', () => {
   it('sin columna de checks en la plantilla, "Resolver diferencias" queda deshabilitado y se avisa', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     const [bloque] = PLANTILLA_REGLA.blocks;
+    if (bloque.type !== 'table') {
+      throw new Error('El bloque del ejemplo de la regla debe ser una tabla.');
+    }
     const sinSeleccion: ViewTemplate = {
       ...PLANTILLA_REGLA,
       blocks: [

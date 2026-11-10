@@ -1,0 +1,437 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "schemaVersion": "1.1.0",
+    "id": "caso-detalle",
+    "revision": "2026-11-10T00:00:00Z",
+    "title": "Detalle de la diferencia",
+    "layout": {
+      "type": "stack",
+      "items": [
+        {
+          "blockId": "aplicativos"
+        },
+        {
+          "blockId": "pestanas"
+        }
+      ]
+    },
+    "blocks": [
+      {
+        "id": "aplicativos",
+        "type": "accordion",
+        "title": "{fuentePrepagoDetalleCliente.nombreCompleto}",
+        "dataSource": {
+          "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos/{casoId}"
+        },
+        "accordion": {
+          "type": "multiple",
+          "columns": 2,
+          "items": [
+            {
+              "id": "pagoEnCasa",
+              "title": "Recargas Pago en Casa",
+              "content": {
+                "title": "Número de guía: {pagoEnCasa.numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "fields": [
+                  {
+                    "id": "estado",
+                    "label": "Estado",
+                    "accessorKey": "pagoEnCasa.estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "label": "Recaudo",
+                    "accessorKey": "pagoEnCasa.recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "label": "Diferencia",
+                    "accessorKey": "pagoEnCasa.diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "alcarrito",
+              "title": "Recargas Alcarrito",
+              "content": {
+                "title": "Número de guía: {alcarrito.numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "fields": [
+                  {
+                    "id": "estado",
+                    "label": "Estado",
+                    "accessorKey": "alcarrito.estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "label": "Recaudo",
+                    "accessorKey": "alcarrito.recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "label": "Diferencia",
+                    "accessorKey": "alcarrito.diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "novasoft",
+              "title": "Recargas Novasoft",
+              "content": {
+                "title": "Número de guía: {novasoft.numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "fields": [
+                  {
+                    "id": "estado",
+                    "label": "Estado",
+                    "accessorKey": "novasoft.estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "label": "Recaudo",
+                    "accessorKey": "novasoft.recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "label": "Diferencia",
+                    "accessorKey": "novasoft.diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "controller",
+              "title": "Recargas Controller",
+              "content": {
+                "title": "Número de guía: {controller.numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "fields": [
+                  {
+                    "id": "concepto1",
+                    "label": "Concepto 1",
+                    "accessorKey": "controller.concepto1"
+                  },
+                  {
+                    "id": "concepto2",
+                    "label": "Concepto 2",
+                    "accessorKey": "controller.concepto2"
+                  },
+                  {
+                    "id": "concepto3",
+                    "label": "Concepto 3",
+                    "accessorKey": "controller.concepto3"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "mitiMiti",
+              "title": "Recargas Miti Miti",
+              "content": {
+                "title": "Número de guía: {mitiMiti.numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "fields": [
+                  {
+                    "id": "estado",
+                    "label": "Estado",
+                    "accessorKey": "mitiMiti.estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "label": "Recaudo",
+                    "accessorKey": "mitiMiti.recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "label": "Diferencia",
+                    "accessorKey": "mitiMiti.diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "app",
+              "title": "Recargas APP",
+              "content": {
+                "title": "Número de guía: {app.numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "fields": [
+                  {
+                    "id": "estado",
+                    "label": "Estado",
+                    "accessorKey": "app.estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "label": "Recaudo",
+                    "accessorKey": "app.recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "label": "Diferencia",
+                    "accessorKey": "app.diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "id": "pestanas",
+        "type": "tabs",
+        "defaultTab": "historial",
+        "tabs": [
+          {
+            "id": "historial",
+            "label": "Historial de cambios",
+            "blockId": "historial"
+          }
+        ]
+      },
+      {
+        "id": "historial",
+        "type": "table",
+        "title": "Historial de cambios",
+        "dataSource": {
+          "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos/{casoId}/historial",
+          "pagination": {
+            "mode": "none"
+          },
+          "sorting": {
+            "mode": "client",
+            "multi": false
+          }
+        },
+        "table": {
+          "rowId": "idCambio",
+          "emptyState": {
+            "title": "Este caso aún no tiene cambios.",
+            "description": "Cuando se registre un cambio aparecerá aquí."
+          },
+          "columns": [
+            {
+              "id": "regla",
+              "accessorKey": "regla",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Regla"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 278
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "correo",
+              "accessorKey": "correo",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Correo"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 224
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "medioPago",
+              "accessorKey": "medioPago",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Medio de pago"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 204
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "valor",
+              "accessorKey": "valor",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Valor"
+                }
+              },
+              "cell": {
+                "component": "CurrencyCell",
+                "inputs": {
+                  "currency": "COP",
+                  "maximumFractionDigits": 0
+                }
+              },
+              "meta": {
+                "width": 117
+              },
+              "enableSorting": true,
+              "sortType": "basic"
+            },
+            {
+              "id": "fechaCreacion",
+              "accessorKey": "fechaCreacion",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Fecha de creación"
+                }
+              },
+              "cell": {
+                "component": "DateCell",
+                "inputs": {
+                  "dateStyle": "medium",
+                  "timeZone": "America/Bogota"
+                }
+              },
+              "meta": {
+                "width": 211
+              },
+              "enableSorting": true,
+              "sortType": "datetime"
+            },
+            {
+              "id": "fechaAprobacion",
+              "accessorKey": "fechaAprobacion",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Fecha de aprobación"
+                }
+              },
+              "cell": {
+                "component": "DateCell",
+                "inputs": {
+                  "dateStyle": "medium",
+                  "timeZone": "America/Bogota"
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "datetime"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
