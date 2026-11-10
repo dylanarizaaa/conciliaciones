@@ -70,7 +70,6 @@ export class Platform {
   protected readonly nombre = computed(() => resourceValue(this.proyecto)?.nombreProyecto ?? 'Plataforma');
 
   protected readonly breadcrumbs = computed<readonly PageHeaderBreadcrumb[]>(() => [
-    { label: 'Inicio', link: '/' },
     { label: 'Conciliaciones', link: CONCILIACIONES_LINK },
     { label: this.nombre() },
   ]);

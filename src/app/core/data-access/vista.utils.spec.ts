@@ -85,7 +85,7 @@ describe('vista.utils', () => {
 
   it('exige una tabla solo a las pantallas que la necesitan', () => {
     const sinTabla = template({
-      blocks: [{ id: 'p', type: 'tabs', tabs: [{ id: 't', label: 'T', blockId: 'x' }] }],
+      blocks: [{ id: 'p', type: 'tabs', tabs: { items: [{ id: 't', title: 'T', blockId: 'x' }] } }],
     });
     expect(assertSupportedTemplate(sinTabla)).toBe(sinTabla);
     expect(() => assertSupportedTemplate(sinTabla, 'table')).toThrow(

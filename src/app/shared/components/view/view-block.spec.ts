@@ -58,12 +58,14 @@ const TABLA: TableBlock = {
 const PESTANAS: TabsBlock = {
   id: 'pestanas',
   type: 'tabs',
-  defaultTab: 'movimientos',
-  tabs: [
-    { id: 'notas', label: 'Notas', blockId: 'notas' },
-    { id: 'movimientos', label: 'Movimientos', blockId: 'movimientos' },
-    { id: 'archivo', label: 'Archivo', blockId: 'movimientos', disabled: true },
-  ],
+  tabs: {
+    defaultTab: 'movimientos',
+    items: [
+      { id: 'notas', title: 'Notas', blockId: 'notas' },
+      { id: 'movimientos', title: 'Movimientos', blockId: 'movimientos' },
+      { id: 'archivo', title: 'Archivo', blockId: 'movimientos', disabled: true },
+    ],
+  },
 };
 
 const NOTAS: TableBlock = {
@@ -232,8 +234,7 @@ describe('ViewBlockOutlet', () => {
   it('pestañas: sin defaultTab válido abre la primera habilitada', async () => {
     await render({
       ...PESTANAS,
-      defaultTab: 'archivo',
-      tabs: [{ ...PESTANAS.tabs[2] }, { ...PESTANAS.tabs[1] }],
+      tabs: { defaultTab: 'archivo', items: [PESTANAS.tabs.items[2], PESTANAS.tabs.items[1]] },
     });
 
     expect(tab('Movimientos').getAttribute('aria-selected')).toBe('true');
@@ -246,7 +247,7 @@ describe('ViewBlockOutlet', () => {
     const circular: TabsBlock = {
       id: 'pestanas',
       type: 'tabs',
-      tabs: [{ id: 'yo', label: 'Yo', blockId: 'pestanas' }],
+      tabs: { items: [{ id: 'yo', title: 'Yo', blockId: 'pestanas' }] },
     };
     try {
       await render(circular);

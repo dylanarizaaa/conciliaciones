@@ -63,6 +63,20 @@ Las rutas de los `dataSource.path` pueden usar `{proyectoId}`, `{procesoId}`, `{
 Los bloques de `layout.items` se pintan en ese orden. Un bloque que no está en el layout solo se
 pinta si otro lo referencia (hoy, una pestaña).
 
+**Un mismo vocabulario en todos los bloques.** Cada bloque lleva su configuración bajo una clave con
+el nombre de su `type` (`table`, `accordion`, `tabs`), y lo que se repite entre bloques se llama igual:
+
+| Concepto | Nombre | Dónde |
+| --- | --- | --- |
+| Texto visible de una sección | `title` | Bloque (`table`, `accordion`), elemento de acordeón, pestaña y tarjeta de acordeón |
+| Lista de elementos | `items` | `accordion.items`, `tabs.items` |
+| Columnas de datos | `columns[]` con `id`, `accessorKey`, `header`, `cell` | `table.columns` y `content.columns` de cada acordeón |
+| Estado sin datos | `emptyState` | `table` y `content` de cada acordeón |
+| Celdas | Catálogo `{ component, inputs }` | Tablas y acordeones |
+
+Las diferencias que quedan responden a la naturaleza del bloque: el acordeón lee **un registro**
+(`dataSource` solo lleva `path`), no una página con paginación y orden, y su `header` es solo texto.
+
 **`accordion`**: un registro, varios acordeones.
 
 | Propiedad | Uso |
@@ -70,23 +84,23 @@ pinta si otro lo referencia (hoy, una pestaña).
 | `title` | Título de la sección. Admite `{campo}` del registro (en el diseño, el nombre del cliente). |
 | `dataSource.path` | Endpoint que devuelve **un objeto** en `resultado` (no una página). |
 | `accordion.type` | `multiple` (por defecto): varios abiertos a la vez. `single`: uno a la vez. |
-| `accordion.columns` | `1` o `2`. Con 2, en pantallas anchas la primera mitad de `items` va a la izquierda y el resto a la derecha. |
+| `accordion.layoutColumns` | `1` o `2`: cuántas columnas de la pantalla ocupan los acordeones. Con 2, en pantallas anchas la primera mitad de `items` va a la izquierda y el resto a la derecha. No es la lista de datos de cada acordeón (`content.columns`). |
 | `accordion.items[]` | `id`, `title`, `defaultOpen` y `content`. |
 | `content.title` | Título de la tarjeta. Admite `{campo}`: `"Número de guía: {pagoEnCasa.numeroGuia}"`. |
-| `content.fields[]` | Pares etiqueta / valor: `id`, `label`, `accessorKey` (ruta con punto dentro del registro) y `cell` opcional. |
-| `content.emptyState` | Mensaje cuando **ningún** campo del acordeón trae dato (p. ej. el caso no existe en ese aplicativo). |
+| `content.columns[]` | Un dato por columna: `id`, `accessorKey` (ruta con punto dentro del registro), `header` (texto de la etiqueta) y `cell` opcional. |
+| `content.emptyState` | Mensaje cuando **ninguna** columna del acordeón trae dato (p. ej. el caso no existe en ese aplicativo). |
 
 `cell` usa el mismo catálogo `{ component, inputs }` de las columnas de la tabla, solo con las celdas
 que muestran un valor: `TextCell` (por defecto), `NumberCell`, `CurrencyCell`, `PercentCell`,
-`DateCell`, `BooleanCell` y `BadgeCell`. Un campo sin dato va como `null` y se muestra "—"; si el
+`DateCell`, `BooleanCell` y `BadgeCell`. Un dato sin valor va como `null` y se muestra "—"; si el
 aplicativo completo no tiene datos, su objeto puede ir como `null`.
 
 **`tabs`**: pestañas que muestran otros bloques.
 
 | Propiedad | Uso |
 | --- | --- |
-| `tabs[]` | `id`, `label`, `blockId` (bloque que se pinta dentro) y `disabled` opcional. |
-| `defaultTab` | `id` de la pestaña abierta al entrar. Por defecto, la primera habilitada. |
+| `tabs.items[]` | `id`, `title`, `blockId` (bloque que se pinta dentro) y `disabled` opcional. |
+| `tabs.defaultTab` | `id` de la pestaña abierta al entrar. Por defecto, la primera habilitada. |
 
 El contenido de cada pestaña se crea (y pide sus datos) la primera vez que se abre.
 
@@ -98,7 +112,7 @@ usa el historial:
 - `sorting.mode: "client"`: el front ordena las filas que ya tiene y no envía `sort`. Con `"server"`
   envía `sort=campo:asc` igual que en la pantalla Regla.
 
-El esquema no puede comprobar que cada `tabs[].blockId` y cada `layout.items[].blockId` exista:
+El esquema no puede comprobar que cada `tabs.items[].blockId` y cada `layout.items[].blockId` exista:
 conviene cubrirlo en las pruebas del back. Si falta, el front omite ese bloque y avisa en consola.
 
 ## Cómo se pinta (front)

@@ -38,7 +38,7 @@ let nextId = 0;
         <div class="rounded-card bg-card p-4 shadow-capa-1">
           <!-- Un solo acordeón para todas las columnas: las flechas del teclado las recorren seguidas. -->
           <div hlmAccordion [type]="type()" class="md:flex-row md:gap-x-[4.125rem]">
-            @for (column of columns(); track $index) {
+            @for (column of layoutColumns(); track $index) {
               <div class="flex min-w-0 flex-1 flex-col gap-8">
                 @for (item of column; track item.id) {
                   <div hlmAccordionItem [isOpened]="item.defaultOpen ?? false">
@@ -59,7 +59,7 @@ let nextId = 0;
           }
           <div class="rounded-card bg-card p-4 shadow-capa-1">
             <div class="flex flex-col gap-8 md:flex-row md:gap-x-[4.125rem]">
-              @for (column of columns(); track $index) {
+              @for (column of layoutColumns(); track $index) {
                 <div class="flex flex-1 flex-col gap-8">
                   @for (item of column; track item.id) {
                     <div class="flex h-8 items-start border-b border-gris-rafaga">
@@ -102,9 +102,9 @@ export class ViewAccordion {
   protected readonly type = computed(() => this.block().accordion.type ?? 'multiple');
 
   /** Reparte los acordeones en orden: la primera mitad a la izquierda y el resto a la derecha. */
-  protected readonly columns = computed<AccordionItemDefinition[][]>(() => {
-    const { items, columns = 1 } = this.block().accordion;
-    const count = Math.max(1, Math.min(columns, items.length));
+  protected readonly layoutColumns = computed<AccordionItemDefinition[][]>(() => {
+    const { items, layoutColumns = 1 } = this.block().accordion;
+    const count = Math.max(1, Math.min(layoutColumns, items.length));
     const perColumn = Math.ceil(items.length / count);
     return Array.from({ length: count }, (_, index) =>
       items.slice(index * perColumn, (index + 1) * perColumn),
