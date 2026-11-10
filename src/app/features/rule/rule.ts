@@ -6,7 +6,6 @@ import {
   DOCUMENT,
   effect,
   inject,
-  input,
   linkedSignal,
   signal,
 } from '@angular/core';
@@ -45,6 +44,7 @@ import {
   toDate,
 } from '../../core/format/formatters';
 import { resourceValue } from '../../core/resource/resource-value';
+import { injectRouteParam, injectQueryParam } from '../../core/routing/route-params';
 import { DataTable } from '../../shared/components/data-table/data-table';
 import {
   buildTemplateTable,
@@ -133,14 +133,14 @@ export class Rule {
   private readonly reglas = inject(ReglasService);
 
   /** Parámetros de ruta `:proyectoId`, `:procesoId`, `:subProcesoId` y `:regla`. */
-  readonly proyectoId = input.required<string>();
-  readonly procesoId = input.required<string>();
-  readonly subProcesoId = input.required<string>();
-  readonly regla = input.required<string>();
+  readonly proyectoId = injectRouteParam('proyectoId');
+  readonly procesoId = injectRouteParam('procesoId');
+  readonly subProcesoId = injectRouteParam('subProcesoId');
+  readonly regla = injectRouteParam('regla');
   /** Query param `?pagina=` (desde 1). */
-  readonly pagina = input<string>();
+  readonly pagina = injectQueryParam('pagina');
   /** Query param `?orden=campo:asc|desc`. */
-  readonly orden = input<string>();
+  readonly orden = injectQueryParam('orden');
 
   protected readonly canalLink = CANAL_LINK;
 

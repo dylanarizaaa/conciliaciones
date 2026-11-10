@@ -33,3 +33,6 @@ export const routes: Routes = [
     loadComponent: () => import('./features/rule/detail/detail').then((m) => m.Detail),
   },
 ];
+
+// El orquestador consume este módulo expuesto con `.then((m) => m.default)`.
+export default routes;

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { resourceValue } from '../../core/resource/resource-value';
+import { injectRouteParam } from '../../core/routing/route-params';
 import { ProcesosService } from '../../core/data-access/procesos.service';
 import { ProyectosService } from '../../core/data-access/proyectos.service';
 import { SubprocesosService } from '../../core/data-access/subprocesos.service';
@@ -51,10 +52,10 @@ export class Category {
   private readonly procesosService = inject(ProcesosService);
   private readonly subprocesosService = inject(SubprocesosService);
 
-  /** Id de la plataforma, enlazado desde el parámetro de ruta `:proyectoId`. */
-  readonly proyectoId = input.required<string>();
-  /** Id de la categoría, enlazado desde el parámetro de ruta `:procesoId`. */
-  readonly procesoId = input.required<string>();
+  /** Id de la plataforma, del parámetro de ruta `:proyectoId`. */
+  readonly proyectoId = injectRouteParam('proyectoId');
+  /** Id de la categoría, del parámetro de ruta `:procesoId`. */
+  readonly procesoId = injectRouteParam('procesoId');
 
   protected readonly plataformaLink = PLATAFORMA_LINK;
   protected readonly skeletons = Array.from({ length: SKELETON_COUNT }, (_, index) => index);

@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { API_BASE_URL } from '../../core/config/api-base-url';
@@ -60,7 +60,6 @@ describe('Category', () => {
       providers: [
         provideRouter(
           [{ path: 'plataformas/:proyectoId/categorias/:procesoId', component: Category }],
-          withComponentInputBinding(),
         ),
         provideHttpClient(),
         provideHttpClientTesting(),

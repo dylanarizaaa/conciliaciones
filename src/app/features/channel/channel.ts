@@ -4,11 +4,11 @@ import {
   computed,
   effect,
   inject,
-  input,
   linkedSignal,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { resourceValue } from '../../core/resource/resource-value';
+import { injectRouteParam, injectQueryParam } from '../../core/routing/route-params';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
   createColumnHelper,
@@ -119,11 +119,11 @@ export class Channel {
   private readonly reglasService = inject(ReglasService);
 
   /** Parámetros de ruta `:proyectoId`, `:procesoId` y `:subProcesoId`. */
-  readonly proyectoId = input.required<string>();
-  readonly procesoId = input.required<string>();
-  readonly subProcesoId = input.required<string>();
+  readonly proyectoId = injectRouteParam('proyectoId');
+  readonly procesoId = injectRouteParam('procesoId');
+  readonly subProcesoId = injectRouteParam('subProcesoId');
   /** Query param `?pagina=` (desde 1). */
-  readonly pagina = input<string>();
+  readonly pagina = injectQueryParam('pagina');
 
   protected readonly categoriaLink = CATEGORIA_LINK;
 

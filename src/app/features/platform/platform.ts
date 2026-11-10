@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { resourceValue } from '../../core/resource/resource-value';
+import { injectRouteParam } from '../../core/routing/route-params';
 import { ProcesosService } from '../../core/data-access/procesos.service';
 import { ProyectosService } from '../../core/data-access/proyectos.service';
 import { formatCurrency, formatInteger } from '../../core/format/formatters';
@@ -50,8 +51,8 @@ export class Platform {
   private readonly proyectosService = inject(ProyectosService);
   private readonly procesosService = inject(ProcesosService);
 
-  /** Id de la plataforma, enlazado desde el parámetro de ruta `:proyectoId`. */
-  readonly proyectoId = input.required<string>();
+  /** Id de la plataforma, del parámetro de ruta `:proyectoId`. */
+  readonly proyectoId = injectRouteParam('proyectoId');
 
   protected readonly conciliacionesLink = CONCILIACIONES_LINK;
   protected readonly skeletons = Array.from({ length: SKELETON_COUNT }, (_, index) => index);

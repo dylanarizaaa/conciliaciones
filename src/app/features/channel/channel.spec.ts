@@ -5,7 +5,7 @@ import {
   type TestRequest,
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { NavigationEnd, provideRouter, Router, withComponentInputBinding } from '@angular/router';
+import { NavigationEnd, provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { filter, firstValueFrom } from 'rxjs';
 
@@ -81,7 +81,6 @@ describe('Channel', () => {
               component: Channel,
             },
           ],
-          withComponentInputBinding(),
         ),
         provideHttpClient(),
         provideHttpClientTesting(),
