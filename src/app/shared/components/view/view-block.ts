@@ -71,7 +71,7 @@ export class ViewBlockOutlet {
    */
   protected readonly children = computed(() => {
     const children = new Map<string, ViewBlock>();
-    for (const { blockId } of this.tabs()?.tabs ?? []) {
+    for (const { blockId } of this.tabs()?.tabs.items ?? []) {
       const child = this.blocks().find((block) => block.id === blockId);
       if (this.trail().includes(blockId)) {
         console.warn(`[vista paramétrica] El bloque "${blockId}" se referencia a sí mismo; no se pinta.`);

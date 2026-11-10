@@ -28,7 +28,6 @@ export class Home {
   private readonly proyectosService = inject(ProyectosService);
 
   protected readonly breadcrumbs: readonly PageHeaderBreadcrumb[] = [
-    { label: 'Inicio', link: '/' },
     { label: 'Conciliaciones' },
   ];
   protected readonly skeletons = Array.from({ length: SKELETON_COUNT }, (_, index) => index);

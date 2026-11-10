@@ -50,19 +50,19 @@ export class ViewTabPanel {
   template: `
     <div hlmTabs [tab]="active()" (tabActivated)="active.set($event)">
       <div hlmTabsList>
-        @for (tab of block().tabs; track tab.id) {
+        @for (tab of block().tabs.items; track tab.id) {
           <button [hlmTabsTrigger]="key(tab)" [disabled]="tab.disabled ?? false">
             <!-- Reserva el ancho del texto en SemiBold (hover / seleccionada) para que la fila no salte. -->
             <span
               class="inline-flex flex-col items-center after:invisible after:h-0 after:overflow-hidden after:font-semibold after:content-[attr(data-label)]"
-              [attr.data-label]="tab.label"
+              [attr.data-label]="tab.title"
             >
-              {{ tab.label }}
+              {{ tab.title }}
             </span>
           </button>
         }
       </div>
-      @for (tab of block().tabs; track tab.id) {
+      @for (tab of block().tabs.items; track tab.id) {
         <div [hlmTabsContent]="key(tab)">
           <ng-template hlmTabsContentLazy>
             <ng-container
@@ -82,9 +82,9 @@ export class ViewTabs {
 
   /** Pestaña abierta: `defaultTab` o la primera habilitada. Se reinicia si cambia el bloque. */
   protected readonly active = linkedSignal(() => {
-    const { tabs, defaultTab } = this.block();
-    const enabled = tabs.filter((tab) => !tab.disabled);
-    const initial = enabled.find((tab) => tab.id === defaultTab) ?? enabled[0] ?? tabs[0];
+    const { items, defaultTab } = this.block().tabs;
+    const enabled = items.filter((tab) => !tab.disabled);
+    const initial = enabled.find((tab) => tab.id === defaultTab) ?? enabled[0] ?? items[0];
     return initial ? this.key(initial) : '';
   });
 

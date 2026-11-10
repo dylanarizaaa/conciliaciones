@@ -86,7 +86,6 @@ export class Category {
   );
 
   protected readonly breadcrumbs = computed<readonly PageHeaderBreadcrumb[]>(() => [
-    { label: 'Inicio', link: '/' },
     { label: 'Conciliaciones', link: CONCILIACIONES_LINK },
     { label: this.nombrePlataforma(), link: PLATAFORMA_LINK },
     { label: this.nombre() },

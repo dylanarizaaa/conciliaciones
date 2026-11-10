@@ -68,8 +68,8 @@ export interface AccordionBlock {
 export interface AccordionDefinition {
   /** `multiple` (por defecto) permite varios abiertos a la vez; `single`, solo uno. */
   readonly type?: 'single' | 'multiple';
-  /** En pantallas anchas los acordeones se reparten en orden en 1 o 2 columnas. */
-  readonly columns?: 1 | 2;
+  /** En pantallas anchas los acordeones se reparten, en orden, en 1 o 2 columnas de la pantalla. */
+  readonly layoutColumns?: 1 | 2;
   readonly items: readonly AccordionItemDefinition[];
 }
 
@@ -80,18 +80,23 @@ export interface AccordionItemDefinition {
   readonly content: FieldListDefinition;
 }
 
-/** Contenido de un acordeón: título opcional y pares etiqueta / valor. */
+/** Contenido de un acordeón: título opcional y una columna por cada dato (encabezado / valor). */
 export interface FieldListDefinition {
   /** Admite plantillas `{campo}` del registro ("Número de guía: {pagoEnCasa.numeroGuia}"). */
   readonly title?: string;
-  /** Mensaje cuando ningún campo trae dato. */
+  /** Mensaje cuando ninguna columna trae dato. */
   readonly emptyState?: { readonly title: string; readonly description?: string };
-  readonly fields: readonly FieldDefinition[];
+  readonly columns: readonly FieldColumnDefinition[];
 }
 
-export interface FieldDefinition {
+/**
+ * Columna de un acordeón: el mismo vocabulario que la columna hoja de una tabla (`id`, `header`,
+ * `accessorKey`, `cell`), pero con encabezado de texto y solo celdas que muestran un valor.
+ */
+export interface FieldColumnDefinition {
   readonly id: string;
-  readonly label: string;
+  /** Texto de la etiqueta del dato. */
+  readonly header: string;
   /** Campo del registro; admite rutas con punto (`pagoEnCasa.estado`). */
   readonly accessorKey: string;
   /** Si falta, el valor se pinta con `TextCell`. */
@@ -102,14 +107,19 @@ export interface FieldDefinition {
 export interface TabsBlock {
   readonly id: string;
   readonly type: 'tabs';
+  readonly tabs: TabsDefinition;
+}
+
+export interface TabsDefinition {
   /** `id` de la pestaña abierta al entrar; por defecto, la primera habilitada. */
   readonly defaultTab?: string;
-  readonly tabs: readonly TabDefinition[];
+  readonly items: readonly TabDefinition[];
 }
 
 export interface TabDefinition {
   readonly id: string;
-  readonly label: string;
+  /** Texto de la pestaña. */
+  readonly title: string;
   /** `id` del bloque que se pinta dentro de la pestaña. */
   readonly blockId: string;
   readonly disabled?: boolean;

@@ -104,9 +104,9 @@ describe('Category', () => {
 
     expect(text(element.querySelector('h1'))).toBe('Recargas');
     const crumbs = [...element.querySelectorAll('nav li')].map((li) => text(li));
-    expect(crumbs).toEqual(['Inicio', 'Conciliaciones', 'Inter Pay', 'Recargas']);
+    expect(crumbs).toEqual(['Conciliaciones', 'Inter Pay', 'Recargas']);
     const hrefs = [...element.querySelectorAll('nav a')].map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['/', '/', '/plataformas/p1']);
+    expect(hrefs).toEqual(['/', '/plataformas/p1']);
     expect(element.querySelector('a[aria-label="Volver a Inter Pay"]')?.getAttribute('href')).toBe(
       '/plataformas/p1',
     );

@@ -5,9 +5,9 @@ import { getPath, interpolateRow, isEmptyValue } from '../../../core/data-access
 import { valueCellResolver } from '../data-table/cells/value-cell';
 
 /**
- * Tarjeta con pares etiqueta / valor de un registro ("Contenido acordeón" del handoff). Los
- * valores se pintan con el mismo catálogo de celdas de la tabla (`TextCell`, `CurrencyCell`, ...).
- * Si ningún campo trae dato muestra el mensaje de `emptyState`.
+ * Tarjeta con encabezado / valor por cada columna de un registro ("Contenido acordeón" del
+ * handoff). Los valores se pintan con el mismo catálogo de celdas de la tabla (`TextCell`,
+ * `CurrencyCell`, ...). Si ninguna columna trae dato muestra el mensaje de `emptyState`.
  */
 @Component({
   selector: 'app-field-list',
@@ -27,11 +27,11 @@ import { valueCellResolver } from '../data-table/cells/value-cell';
         </p>
       }
       <dl class="flex flex-col gap-3">
-        @for (field of fields(); track field.id) {
+        @for (column of columns(); track column.id) {
           <div class="flex min-w-0 flex-col">
-            <dt class="text-sm leading-5 text-muted-foreground">{{ field.label }}</dt>
+            <dt class="text-sm leading-5 text-muted-foreground">{{ column.header }}</dt>
             <dd class="min-w-0 text-sm leading-5 font-semibold text-foreground">
-              <ng-container *ngComponentOutlet="field.view.component; inputs: field.view.inputs" />
+              <ng-container *ngComponentOutlet="column.view.component; inputs: column.view.inputs" />
             </dd>
           </div>
         }
@@ -40,7 +40,7 @@ import { valueCellResolver } from '../data-table/cells/value-cell';
   `,
 })
 export class FieldList {
-  /** Título y campos (vienen de la plantilla). */
+  /** Título y columnas (vienen de la plantilla). */
   readonly definition = input.required<FieldListDefinition>();
   /** Registro del que se leen los valores. */
   readonly record = input.required<ViewRecord>();
@@ -49,21 +49,21 @@ export class FieldList {
 
   /** El catálogo se resuelve una vez por plantilla, no en cada cambio de datos. */
   private readonly resolvers = computed(() =>
-    this.definition().fields.map((field) => ({
-      field,
-      resolve: valueCellResolver(field.cell, { wrap: true }),
+    this.definition().columns.map((column) => ({
+      column,
+      resolve: valueCellResolver(column.cell, { wrap: true }),
     })),
   );
 
-  protected readonly fields = computed(() => {
+  protected readonly columns = computed(() => {
     const record = this.record();
-    return this.resolvers().map(({ field, resolve }) => {
-      const value = getPath(record, field.accessorKey);
-      return { id: field.id, label: field.label, value, view: resolve(value, record) };
+    return this.resolvers().map(({ column, resolve }) => {
+      const value = getPath(record, column.accessorKey);
+      return { id: column.id, header: column.header, value, view: resolve(value, record) };
     });
   });
 
-  protected readonly isEmpty = computed(() => this.fields().every(({ value }) => isEmptyValue(value)));
+  protected readonly isEmpty = computed(() => this.columns().every(({ value }) => isEmptyValue(value)));
 
   protected readonly title = computed(() => {
     const title = this.definition().title;

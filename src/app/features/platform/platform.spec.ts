@@ -85,7 +85,7 @@ describe('Platform', () => {
 
     expect(element.querySelector('h1')?.textContent?.trim()).toBe('Inter Pay');
     const crumbs = [...element.querySelectorAll('nav li')].map((li) => li.textContent?.trim());
-    expect(crumbs).toEqual(['Inicio', 'Conciliaciones', 'Inter Pay']);
+    expect(crumbs).toEqual(['Conciliaciones', 'Inter Pay']);
     // "Conciliaciones" y la flecha de regreso vuelven al listado de plataformas.
     expect(element.querySelector('nav a[href="/"]')).not.toBeNull();
     expect(element.querySelector('a[aria-label="Volver a Conciliaciones"]')?.getAttribute('href')).toBe(

@@ -149,7 +149,7 @@ describe('Channel', () => {
 
     expect(text(element.querySelector('h1'))).toBe('Pago en Casa');
     expect([...element.querySelectorAll('nav[aria-label="Ruta de navegación"] li')].map(text)).toEqual(
-      ['Inicio', 'Conciliaciones', 'Inter Pay', 'Recargas', 'Pago en Casa'],
+      ['Conciliaciones', 'Inter Pay', 'Recargas', 'Pago en Casa'],
     );
     expect(text(element.querySelector('app-page-header p'))).toBe(
       'Gestiona las diferencias detectadas en cada regla de recargas de Pago en Casa',

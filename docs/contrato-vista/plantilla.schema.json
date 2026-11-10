@@ -90,8 +90,8 @@
               "enum": ["single", "multiple"],
               "default": "multiple"
             },
-            "columns": {
-              "description": "En pantallas anchas los acordeones se reparten en orden: la primera mitad en la columna izquierda y el resto en la derecha.",
+            "layoutColumns": {
+              "description": "Cuántas columnas de la pantalla ocupan los acordeones. Con 2, en pantallas anchas la primera mitad de items va a la columna izquierda y el resto a la derecha. No es la lista de datos de cada acordeón (content.columns).",
               "enum": [1, 2],
               "default": 1
             },
@@ -112,9 +112,9 @@
       }
     },
     "fieldList": {
-      "description": "Pares etiqueta / valor leídos del registro. Si ningún campo trae dato se muestra emptyState.",
+      "description": "Contenido de un acordeón: una columna por cada dato del registro (encabezado / valor). Si ninguna trae dato se muestra emptyState.",
       "type": "object",
-      "required": ["fields"],
+      "required": ["columns"],
       "additionalProperties": false,
       "properties": {
         "title": {
@@ -122,17 +122,18 @@
           "type": "string"
         },
         "emptyState": { "$ref": "#/$defs/emptyState" },
-        "fields": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/field" } }
+        "columns": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/fieldColumn" } }
       }
     },
-    "field": {
+    "fieldColumn": {
+      "description": "Mismo vocabulario que la columna hoja de una tabla (id, accessorKey, header, cell), con encabezado de texto y solo celdas de valor.",
       "type": "object",
-      "required": ["id", "label", "accessorKey"],
+      "required": ["id", "header", "accessorKey"],
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/$defs/identifier" },
-        "label": { "type": "string", "minLength": 1 },
         "accessorKey": { "$ref": "#/$defs/fieldPath" },
+        "header": { "type": "string", "minLength": 1 },
         "cell": { "$ref": "#/$defs/valueCell" }
       }
     },
@@ -163,25 +164,32 @@
       "properties": {
         "id": { "$ref": "#/$defs/identifier" },
         "type": { "const": "tabs" },
-        "defaultTab": {
-          "description": "id de la pestaña abierta al entrar. Por defecto, la primera habilitada.",
-          "$ref": "#/$defs/identifier"
-        },
         "tabs": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "type": "object",
-            "required": ["id", "label", "blockId"],
-            "additionalProperties": false,
-            "properties": {
-              "id": { "$ref": "#/$defs/identifier" },
-              "label": { "type": "string", "minLength": 1 },
-              "blockId": {
-                "description": "id del bloque que se pinta dentro de la pestaña. Ese bloque no va en layout.items.",
-                "$ref": "#/$defs/identifier"
-              },
-              "disabled": { "type": "boolean", "default": false }
+          "type": "object",
+          "required": ["items"],
+          "additionalProperties": false,
+          "properties": {
+            "defaultTab": {
+              "description": "id de la pestaña abierta al entrar. Por defecto, la primera habilitada.",
+              "$ref": "#/$defs/identifier"
+            },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["id", "title", "blockId"],
+                "additionalProperties": false,
+                "properties": {
+                  "id": { "$ref": "#/$defs/identifier" },
+                  "title": { "type": "string", "minLength": 1 },
+                  "blockId": {
+                    "description": "id del bloque que se pinta dentro de la pestaña. Ese bloque no va en layout.items.",
+                    "$ref": "#/$defs/identifier"
+                  },
+                  "disabled": { "type": "boolean", "default": false }
+                }
+              }
             }
           }
         }
