@@ -11,12 +11,12 @@ import { EmptyValue } from './empty-value';
   host: { class: 'flex min-w-0 flex-col' },
   template: `
     @if (text(); as text) {
-      <span class="truncate" [class]="emphasisClass()" [attr.title]="truncate() ? text : null">{{ text }}</span>
+      <span [class]="textClass()" [attr.title]="truncate() ? text : null">{{ text }}</span>
     } @else {
       <app-empty-value />
     }
     @if (secondaryText(); as secondary) {
-      <span class="truncate text-xs" [attr.title]="truncate() ? secondary : null">{{ secondary }}</span>
+      <span [class]="overflowClass() + ' text-xs'" [attr.title]="truncate() ? secondary : null">{{ secondary }}</span>
     }
   `,
 })
@@ -28,8 +28,13 @@ export class TextCell {
   readonly secondary = input<unknown>(null);
   /** Muestra el texto completo como título cuando se corta. */
   readonly truncate = input<boolean>(false);
+  /** El texto largo baja de línea en lugar de cortarse (listas de campos; no en tablas). */
+  readonly wrap = input<boolean>(false);
 
   protected readonly text = computed(() => toText(this.value()));
   protected readonly secondaryText = computed(() => toText(this.secondary()));
-  protected readonly emphasisClass = computed(() => EMPHASIS_CLASS[this.emphasis()] ?? '');
+  protected readonly overflowClass = computed(() => (this.wrap() ? 'break-words' : 'truncate'));
+  protected readonly textClass = computed(
+    () => `${this.overflowClass()} ${EMPHASIS_CLASS[this.emphasis()] ?? ''}`,
+  );
 }

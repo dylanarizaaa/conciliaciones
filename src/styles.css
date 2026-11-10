@@ -24,6 +24,8 @@
   --color-acento: var(--acento);
   --color-acento-oscuro: var(--acento-oscuro);
   --color-exito: var(--exito);
+  --color-terciario: var(--terciario);
+  --color-texto-hover: var(--texto-hover);
   --color-primary-hover: var(--primary-hover);
   --color-disabled: var(--disabled);
   --color-disabled-foreground: var(--disabled-foreground);
@@ -64,6 +66,9 @@
   --acento-oscuro: #1f5a99;
   /* Ícono "check-circle-new" del modal de resultado. */
   --exito: #005a37;
+  /* "Pestañas": indicador de la pestaña seleccionada y texto al pasar el cursor. */
+  --terciario: #6e52e1;
+  --texto-hover: #3b4350;
 
   /* Tokens semánticos derivados */
   --primary-hover: var(--acento-oscuro);

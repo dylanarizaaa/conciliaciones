@@ -2,13 +2,13 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:conciliaciones:vista-datos:1.0.0",
   "title": "Página de datos de una tabla paramétrica",
-  "description": "Contrato del endpoint declarado en dataSource.path. Cada fila trae todos los campos que la plantilla referencia; un campo sin valor va como null.",
+  "description": "Contrato del endpoint declarado en dataSource.path de un bloque de tabla. Cada fila trae todos los campos que la plantilla referencia; un campo sin valor va como null. Con pagination.mode = none el back devuelve todas las filas en una sola página (pageNumber 1, pageSize = totalRows).",
   "type": "object",
   "required": ["pageNumber", "pageSize", "totalRows", "totalPages", "rows"],
   "additionalProperties": false,
   "properties": {
     "pageNumber": { "type": "integer", "minimum": 1 },
-    "pageSize": { "type": "integer", "minimum": 1 },
+    "pageSize": { "type": "integer", "minimum": 0 },
     "totalRows": { "type": "integer", "minimum": 0 },
     "totalPages": { "type": "integer", "minimum": 0 },
     "sort": {

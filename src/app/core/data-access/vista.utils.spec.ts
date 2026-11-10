@@ -5,6 +5,8 @@ import {
   findTableBlock,
   getPath,
   interpolateRow,
+  isEmptyValue,
+  layoutBlocks,
   leafColumnsOf,
   parseSorting,
   resolveApiPath,
@@ -68,16 +70,39 @@ describe('vista.utils', () => {
     expect(parseSorting(undefined)).toEqual([]);
   });
 
-  it('acepta plantillas de la versión mayor 1 con al menos una tabla', () => {
+  it('acepta plantillas de la versión mayor 1 con al menos un bloque', () => {
     const plantilla = template({ schemaVersion: '1.4.2' });
     expect(assertSupportedTemplate(plantilla)).toBe(plantilla);
+    expect(assertSupportedTemplate(plantilla, 'table')).toBe(plantilla);
   });
 
-  it('rechaza versiones mayores desconocidas o plantillas sin tablas', () => {
+  it('rechaza versiones mayores desconocidas o plantillas sin bloques', () => {
     expect(() => assertSupportedTemplate(template({ schemaVersion: '2.0.0' }))).toThrow(
       'La plantilla usa la versión 2.0.0 del contrato.',
     );
     expect(() => assertSupportedTemplate(template({ blocks: [] }))).toThrow(ApiError);
+  });
+
+  it('exige una tabla solo a las pantallas que la necesitan', () => {
+    const sinTabla = template({
+      blocks: [{ id: 'p', type: 'tabs', tabs: [{ id: 't', label: 'T', blockId: 'x' }] }],
+    });
+    expect(assertSupportedTemplate(sinTabla)).toBe(sinTabla);
+    expect(() => assertSupportedTemplate(sinTabla, 'table')).toThrow(
+      'La plantilla no trae ninguna tabla para mostrar.',
+    );
+  });
+
+  it('devuelve los bloques del layout en orden, sin los que no existen', () => {
+    const plantilla = template({
+      layout: { type: 'stack', items: [{ blockId: 'b' }, { blockId: 'zz' }, { blockId: 'a' }] },
+    });
+    expect(layoutBlocks(plantilla).map((block) => block.id)).toEqual(['b', 'a']);
+  });
+
+  it('reconoce los valores sin dato', () => {
+    expect([null, undefined, '', '  '].every(isEmptyValue)).toBe(true);
+    expect([0, false, 'x', {}].some(isEmptyValue)).toBe(false);
   });
 
   it('elige el bloque de tabla en el orden del layout o por id', () => {

@@ -27,7 +27,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/rule/rule').then((m) => m.Rule),
   },
   {
-    // "Ver detalle" de un caso de la regla (pantalla pendiente; hoy abre el stub).
+    // "Ver detalle" de un caso de la regla.
     path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:regla/casos/:casoId',
     title: 'Detalle | Conciliaciones',
     loadComponent: () => import('./features/rule/detail/detail').then((m) => m.Detail),

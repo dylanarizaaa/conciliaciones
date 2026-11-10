@@ -32,8 +32,11 @@ export interface ViewLayout {
   readonly items: readonly { readonly blockId: string }[];
 }
 
-/** Hoy solo hay bloques de tabla; los demás tipos se agregan a esta unión. */
-export type ViewBlock = TableBlock;
+/**
+ * Bloques que puede traer una plantilla. Los que se nombran en `layout.items` se pintan en ese
+ * orden; los demás solo se pintan si otro bloque los referencia (p. ej. una pestaña).
+ */
+export type ViewBlock = TableBlock | AccordionBlock | TabsBlock;
 
 export interface TableBlock {
   readonly id: string;
@@ -41,6 +44,75 @@ export interface TableBlock {
   readonly title?: string;
   readonly dataSource: DataSource;
   readonly table: TableDefinition;
+}
+
+/** Fuente de un registro único (un objeto, no una lista paginada). */
+export interface RecordSource {
+  /** Ruta relativa al API base con llaves `{param}` (parámetros de la ruta del front). */
+  readonly path: string;
+}
+
+/**
+ * Acordeones (v1.1). Todos leen el mismo registro (`dataSource`); cada acordeón muestra una
+ * lista de campos de ese registro.
+ */
+export interface AccordionBlock {
+  readonly id: string;
+  readonly type: 'accordion';
+  /** Título de la sección; admite plantillas `{campo}` del registro. */
+  readonly title?: string;
+  readonly dataSource: RecordSource;
+  readonly accordion: AccordionDefinition;
+}
+
+export interface AccordionDefinition {
+  /** `multiple` (por defecto) permite varios abiertos a la vez; `single`, solo uno. */
+  readonly type?: 'single' | 'multiple';
+  /** En pantallas anchas los acordeones se reparten en orden en 1 o 2 columnas. */
+  readonly columns?: 1 | 2;
+  readonly items: readonly AccordionItemDefinition[];
+}
+
+export interface AccordionItemDefinition {
+  readonly id: string;
+  readonly title: string;
+  readonly defaultOpen?: boolean;
+  readonly content: FieldListDefinition;
+}
+
+/** Contenido de un acordeón: título opcional y pares etiqueta / valor. */
+export interface FieldListDefinition {
+  /** Admite plantillas `{campo}` del registro ("Número de guía: {pagoEnCasa.numeroGuia}"). */
+  readonly title?: string;
+  /** Mensaje cuando ningún campo trae dato. */
+  readonly emptyState?: { readonly title: string; readonly description?: string };
+  readonly fields: readonly FieldDefinition[];
+}
+
+export interface FieldDefinition {
+  readonly id: string;
+  readonly label: string;
+  /** Campo del registro; admite rutas con punto (`pagoEnCasa.estado`). */
+  readonly accessorKey: string;
+  /** Si falta, el valor se pinta con `TextCell`. */
+  readonly cell?: ValueCellRef;
+}
+
+/** Pestañas (v1.1): cada una muestra otro bloque de la plantilla. */
+export interface TabsBlock {
+  readonly id: string;
+  readonly type: 'tabs';
+  /** `id` de la pestaña abierta al entrar; por defecto, la primera habilitada. */
+  readonly defaultTab?: string;
+  readonly tabs: readonly TabDefinition[];
+}
+
+export interface TabDefinition {
+  readonly id: string;
+  readonly label: string;
+  /** `id` del bloque que se pinta dentro de la pestaña. */
+  readonly blockId: string;
+  readonly disabled?: boolean;
 }
 
 export interface ColumnSortDefinition {
@@ -205,6 +277,9 @@ export type CellRef =
   | { readonly component: 'LinkCell'; readonly inputs: LinkCellInputs }
   | { readonly component: 'RowCheckbox'; readonly inputs: RowCheckboxInputs };
 
+/** Celdas que solo muestran un valor: sirven en tablas y en listas de campos. */
+export type ValueCellRef = Exclude<CellRef, { readonly component: 'LinkCell' | 'RowCheckbox' }>;
+
 // --- Filtros (el contrato los admite; el front aún no los pinta) ------------------------------
 
 export type FilterRef =
@@ -229,6 +304,9 @@ export type FilterRef =
 // ---------------------------------------------------------------------------------------------
 
 export type TableRow = Readonly<Record<string, unknown>>;
+
+/** Registro único de un bloque con `RecordSource` (contenido de `resultado`). */
+export type ViewRecord = Readonly<Record<string, unknown>>;
 
 export interface TablePageSummary {
   readonly casosTotales: number;

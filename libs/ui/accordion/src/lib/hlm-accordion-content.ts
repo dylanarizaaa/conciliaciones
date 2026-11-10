@@ -12,7 +12,7 @@ import { classes } from '@spartan-ng/helm/utils';
   },
   template: `
     <div
-      class="pt-0 pb-2.5 [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3 [&_p:not(:last-child)]:mb-4"
+      class="pt-6 [&_a]:hover:text-foreground [&_a]:underline [&_a]:underline-offset-3"
     >
       <ng-content />
     </div>
@@ -22,7 +22,7 @@ export class HlmAccordionContent {
   constructor() {
     classes(
       () =>
-        'text-sm transition-all data-[state=closed]:h-0 data-[state=open]:h-(--brn-accordion-content-height)',
+        'text-sm transition-all motion-reduce:transition-none data-[state=closed]:h-0 data-[state=open]:h-(--brn-accordion-content-height)',
     );
   }
 }

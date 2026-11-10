@@ -12,17 +12,20 @@ import type { ClassValue } from 'clsx';
   providers: [provideIcons({ lucideChevronDown, lucideChevronUp })],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <h3 brnAccordionHeader class="flex">
+    <!-- Fila de 32px con la línea Gris ráfaga debajo; la flecha va junto al título. -->
+    <h3 brnAccordionHeader class="flex border-b border-gris-rafaga">
       <button brnAccordionTrigger data-slot="accordion-trigger" [class]="_computedTriggerClass()">
         <ng-content />
         <ng-icon
           name="lucideChevronDown"
           data-slot="accordion-trigger-icon"
+          aria-hidden="true"
           class="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden"
         />
         <ng-icon
           name="lucideChevronUp"
           data-slot="accordion-trigger-icon"
+          aria-hidden="true"
           class="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:inline group-aria-[expanded=false]/accordion-trigger:hidden"
         />
       </button>
@@ -34,7 +37,7 @@ export class HlmAccordionTrigger {
 
   protected readonly _computedTriggerClass = computed(() =>
     hlm(
-      'focus-visible:ring-ring/50 focus-visible:border-ring focus-visible:after:border-ring **:data-[slot=accordion-trigger-icon]:text-muted-foreground! rounded-lg py-2.5 text-start text-sm font-medium hover:underline focus-visible:ring-3 **:data-[slot=accordion-trigger-icon]:ms-auto **:data-[slot=accordion-trigger-icon]:text-[length:--spacing(4)] group/accordion-trigger relative flex flex-1 items-start justify-between border border-transparent transition-all outline-none aria-disabled:pointer-events-none aria-disabled:opacity-50',
+      'group/accordion-trigger relative flex min-h-[calc(--spacing(8)-1px)] flex-1 cursor-pointer items-center gap-2 rounded-sm text-start text-xl leading-6 font-semibold text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring **:data-[slot=accordion-trigger-icon]:text-[length:--spacing(6)] aria-disabled:pointer-events-none aria-disabled:opacity-50',
       this.triggerClass(),
     ),
   );

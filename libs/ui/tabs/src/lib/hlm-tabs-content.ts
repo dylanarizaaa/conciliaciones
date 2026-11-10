@@ -14,6 +14,10 @@ export class HlmTabsContent {
   public readonly contentFor = input.required<string>({ alias: 'hlmTabsContent' });
 
   constructor() {
-    classes(() => 'flex-1 text-sm outline-none');
+    // El panel recibe foco con el teclado (tabindex 0): el contorno debe verse.
+    classes(
+      () =>
+        'flex-1 rounded-lg text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+    );
   }
 }

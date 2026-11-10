@@ -1,0 +1,43 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "pageNumber": 1,
+    "pageSize": 3,
+    "totalRows": 3,
+    "totalPages": 1,
+    "sort": [],
+    "rows": [
+      {
+        "idCambio": "CAMBIO-1",
+        "regla": "Reverso por Pago en Casa duplicado",
+        "correo": "usuario1@interrapidisimo.com",
+        "medioPago": "Inter Pay Cliente",
+        "valor": 3100000,
+        "fechaCreacion": "2026-06-26T09:10:00-05:00",
+        "fechaAprobacion": "2026-06-27T15:40:00-05:00"
+      },
+      {
+        "idCambio": "CAMBIO-2",
+        "regla": "Reverso por Pago en Casa duplicado",
+        "correo": "usuario2@interrapidisimo.com",
+        "medioPago": "Inter Pay Interrapidisimo",
+        "valor": 3100000,
+        "fechaCreacion": "2026-06-26T10:25:00-05:00",
+        "fechaAprobacion": "2026-06-27T16:05:00-05:00"
+      },
+      {
+        "idCambio": "CAMBIO-3",
+        "regla": "Reverso por Pago en Casa duplicado",
+        "correo": "usuario3@interrapidisimo.com",
+        "medioPago": "Inter Pay Interrapidisimo",
+        "valor": 3100000,
+        "fechaCreacion": "2026-06-26T11:50:00-05:00",
+        "fechaAprobacion": "2026-06-27T16:30:00-05:00"
+      }
+    ]
+  }
+}

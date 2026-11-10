@@ -99,7 +99,7 @@ let nextId = 0;
     <div
       #scroller
       hlmTableContainer
-      class="rounded-lg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      class="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       [class.pb-2]="overflowing()"
       [attr.role]="overflowing() ? 'region' : null"
       [attr.tabindex]="overflowing() ? 0 : null"

@@ -21,7 +21,7 @@ import { RouterLink } from '@angular/router';
     <a
       [routerLink]="link()"
       [attr.aria-label]="ariaLabel() || null"
-      class="rounded-sm font-semibold text-acento underline-offset-2 outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+      class="rounded-sm font-semibold text-acento underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
       {{ label() }}
       @if (context(); as context) {

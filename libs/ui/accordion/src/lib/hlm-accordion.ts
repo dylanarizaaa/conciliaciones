@@ -12,6 +12,7 @@ import { classes } from '@spartan-ng/helm/utils';
 })
 export class HlmAccordion {
   constructor() {
-    classes(() => 'flex w-full flex-col');
+    // "Aplicativos": 32px entre acordeones.
+    classes(() => 'flex w-full flex-col gap-8');
   }
 }
