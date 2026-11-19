@@ -1,0 +1,12 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "archivoBase64": "Q29udGVuaWRvIGRlIGVqZW1wbG86IGVsIGJhY2sgZW52w61hIGFxdcOtIGVsIC54bHN4IGVuIGJhc2U2NC4=",
+    "nombreArchivo": "diferencias-cambio-de-estado-logistico.xlsx",
+    "contentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  }
+}

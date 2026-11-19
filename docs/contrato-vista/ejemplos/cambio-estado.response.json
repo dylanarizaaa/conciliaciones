@@ -1,0 +1,17 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "actualizados": [
+      "8c20e2c1-408a-57a8-96bb-3b3705ea1341",
+      "66274696-e56a-5791-b66f-e7d3a53be2dc"
+    ],
+    "noEncontrados": [
+      "962ca66b-5bac-5b58-aa43-9bedf1c51b71"
+    ],
+    "totalProcesados": 3
+  }
+}

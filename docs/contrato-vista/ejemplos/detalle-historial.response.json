@@ -5,12 +5,11 @@
   "errores": [],
   "mensajeError": null,
   "resultado": {
+    "totalCount": 3,
+    "totalPages": 1,
     "pageNumber": 1,
     "pageSize": 3,
-    "totalRows": 3,
-    "totalPages": 1,
-    "sort": [],
-    "rows": [
+    "data": [
       {
         "idCambio": "CAMBIO-1",
         "regla": "Reverso por Pago en Casa duplicado",

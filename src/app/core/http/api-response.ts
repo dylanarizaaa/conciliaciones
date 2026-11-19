@@ -20,13 +20,30 @@ export class ApiError extends Error {
   }
 }
 
-/** Devuelve `resultado` o lanza `ApiError` si el backend reporta un fallo. */
-export function unwrapApiResponse<T>(response: ApiResponse<T>): T {
+/** La respuesta trae la envoltura estándar (`respuestaEstado`, `resultado`, ...). */
+export function isApiResponse<T>(response: unknown): response is ApiResponse<T> {
+  return (
+    typeof response === 'object' &&
+    response !== null &&
+    typeof (response as { respuestaEstado?: unknown }).respuestaEstado === 'boolean'
+  );
+}
+
+/**
+ * Devuelve `resultado` o lanza `ApiError` si el backend reporta un fallo.
+ *
+ * El swagger declara algunos endpoints (`proyectos`, `procesos`, `subprocesos`) sin la envoltura:
+ * si la respuesta no la trae, se toma tal cual como resultado.
+ */
+export function unwrapApiResponse<T>(response: ApiResponse<T> | T): T {
+  if (!isApiResponse<T>(response)) {
+    return response as T;
+  }
   if (!response.respuestaEstado) {
     throw new ApiError(
       response.mensajeError ?? response.mensaje ?? 'La solicitud no pudo completarse.',
       response.codigoEstado,
-      response.errores,
+      response.errores ?? [],
     );
   }
   return response.resultado;

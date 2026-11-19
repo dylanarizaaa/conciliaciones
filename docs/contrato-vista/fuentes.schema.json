@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:conciliaciones:vista-fuentes:1.1.0",
+  "title": "Fuentes de un bloque accordion",
+  "description": "Contenido de resultado de GET /Conciliaciones/fuentes-detalle?conciliacionId= (GetConciliationFuentesDetailResponse). Cada fuente es un acordeón y cada dato una fila etiqueta / valor.",
+  "type": "object",
+  "required": [
+    "data"
+  ],
+  "properties": {
+    "data": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "required": [
+          "nombre",
+          "datos"
+        ],
+        "properties": {
+          "nombre": {
+            "description": "Título del acordeón (aplicativo).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "datos": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "required": [
+                "nombre",
+                "valor"
+              ],
+              "properties": {
+                "nombre": {
+                  "description": "Etiqueta del dato.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "tipo": {
+                  "description": "Tipo del valor; elige la celda (accordion.cellsByType o la celda por defecto del front).",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "valor": {
+                  "description": "Montos como número y fechas en ISO 8601. null se muestra como \"—\"."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

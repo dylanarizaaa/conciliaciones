@@ -1,0 +1,140 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "data": [
+      {
+        "nombre": "Recargas Pago en Casa",
+        "datos": [
+          {
+            "nombre": "Número de guía",
+            "tipo": "string",
+            "valor": "70002333336"
+          },
+          {
+            "nombre": "Estado",
+            "tipo": "string",
+            "valor": "Entregado"
+          },
+          {
+            "nombre": "Recaudo",
+            "tipo": "decimal",
+            "valor": 6200000
+          },
+          {
+            "nombre": "Diferencia",
+            "tipo": "decimal",
+            "valor": 3100000
+          }
+        ]
+      },
+      {
+        "nombre": "Recargas Alcarrito",
+        "datos": [
+          {
+            "nombre": "Número de guía",
+            "tipo": "string",
+            "valor": "70002333336"
+          },
+          {
+            "nombre": "Estado",
+            "tipo": "string",
+            "valor": "Entregado"
+          },
+          {
+            "nombre": "Recaudo",
+            "tipo": "decimal",
+            "valor": 3100000
+          },
+          {
+            "nombre": "Diferencia",
+            "tipo": "decimal",
+            "valor": 0
+          }
+        ]
+      },
+      {
+        "nombre": "Recargas Novasoft",
+        "datos": []
+      },
+      {
+        "nombre": "Recargas Controller",
+        "datos": [
+          {
+            "nombre": "Número de guía",
+            "tipo": "string",
+            "valor": "70002333336"
+          },
+          {
+            "nombre": "Concepto 1",
+            "tipo": "string",
+            "valor": "Valor concepto 1"
+          },
+          {
+            "nombre": "Concepto 2",
+            "tipo": "string",
+            "valor": "Valor concepto 2"
+          },
+          {
+            "nombre": "Concepto 3",
+            "tipo": "string",
+            "valor": "Valor concepto 3"
+          }
+        ]
+      },
+      {
+        "nombre": "Recargas Miti Miti",
+        "datos": [
+          {
+            "nombre": "Número de guía",
+            "tipo": "string",
+            "valor": "70002333336"
+          },
+          {
+            "nombre": "Estado",
+            "tipo": "string",
+            "valor": "En distribución"
+          },
+          {
+            "nombre": "Recaudo",
+            "tipo": "decimal",
+            "valor": 3100000
+          },
+          {
+            "nombre": "Diferencia",
+            "tipo": "decimal",
+            "valor": 0
+          }
+        ]
+      },
+      {
+        "nombre": "Recargas APP",
+        "datos": [
+          {
+            "nombre": "Número de guía",
+            "tipo": "string",
+            "valor": "70002333336"
+          },
+          {
+            "nombre": "Estado",
+            "tipo": "string",
+            "valor": "Entregado"
+          },
+          {
+            "nombre": "Recaudo",
+            "tipo": "decimal",
+            "valor": 3100000
+          },
+          {
+            "nombre": "Diferencia",
+            "tipo": "decimal",
+            "valor": 0
+          }
+        ]
+      }
+    ]
+  }
+}

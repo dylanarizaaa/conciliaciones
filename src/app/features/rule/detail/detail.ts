@@ -3,6 +3,7 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton';
 import { ProcesosService } from '../../../core/data-access/procesos.service';
 import { ProyectosService } from '../../../core/data-access/proyectos.service';
+import { ReglasService } from '../../../core/data-access/reglas.service';
 import { SubprocesosService } from '../../../core/data-access/subprocesos.service';
 import { layoutBlocks } from '../../../core/data-access/vista.utils';
 import { VistasService } from '../../../core/data-access/vistas.service';
@@ -19,7 +20,7 @@ import { ViewBlockOutlet } from '../../../shared/components/view/view-block';
 
 /**
  * Rutas relativas desde
- * `plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:regla/casos/:casoId`.
+ * `plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId`.
  */
 const REGLA_LINK = '../..';
 const CANAL_LINK = '../../../..';
@@ -43,13 +44,17 @@ export class Detail {
   private readonly procesosService = inject(ProcesosService);
   private readonly subprocesosService = inject(SubprocesosService);
   private readonly vistas = inject(VistasService);
+  private readonly reglas = inject(ReglasService);
 
-  /** Parámetros de ruta `:proyectoId`, `:procesoId`, `:subProcesoId`, `:regla` y `:casoId`. */
+  /**
+   * Parámetros de ruta `:proyectoId`, `:procesoId`, `:subProcesoId`, `:reglaId` y
+   * `:conciliacionId` (el `rowId` de la fila de la pantalla Regla).
+   */
   readonly proyectoId = injectRouteParam('proyectoId');
   readonly procesoId = injectRouteParam('procesoId');
   readonly subProcesoId = injectRouteParam('subProcesoId');
-  readonly regla = injectRouteParam('regla');
-  readonly casoId = injectRouteParam('casoId');
+  readonly reglaId = injectRouteParam('reglaId');
+  readonly conciliacionId = injectRouteParam('conciliacionId');
 
   protected readonly reglaLink = REGLA_LINK;
 
@@ -71,8 +76,20 @@ export class Detail {
       this.subprocesosService.getSubproceso(params.procesoId, params.subProcesoId),
   });
 
+  /** La URL trae el id de la regla; el nombre sale del listado de reglas del canal. */
+  protected readonly regla = rxResource({
+    params: () => ({ subProcesoId: this.subProcesoId(), reglaId: this.reglaId() }),
+    stream: ({ params }) => this.reglas.getRegla(params.subProcesoId, params.reglaId),
+  });
+
+  protected readonly nombreRegla = computed(() => resourceValue(this.regla)?.nombreRegla ?? 'Regla');
+
   protected readonly headerLoading = computed(
-    () => this.proyecto.isLoading() || this.proceso.isLoading() || this.subproceso.isLoading(),
+    () =>
+      this.proyecto.isLoading() ||
+      this.proceso.isLoading() ||
+      this.subproceso.isLoading() ||
+      this.regla.isLoading(),
   );
 
   protected readonly breadcrumbs = computed<readonly PageHeaderBreadcrumb[]>(() => [
@@ -80,7 +97,7 @@ export class Detail {
     { label: resourceValue(this.proyecto)?.nombreProyecto ?? 'Plataforma', link: PLATAFORMA_LINK },
     { label: resourceValue(this.proceso)?.nombreProceso ?? 'Categoría', link: CATEGORIA_LINK },
     { label: resourceValue(this.subproceso)?.nombreSubProceso ?? 'Canal', link: CANAL_LINK },
-    { label: this.regla(), link: REGLA_LINK },
+    { label: this.nombreRegla(), link: REGLA_LINK },
     { label: 'Detalle' },
   ]);
 
@@ -88,8 +105,8 @@ export class Detail {
 
   /** La plantilla es la misma para todos los casos de la regla: no se vuelve a pedir por caso. */
   protected readonly plantilla = rxResource({
-    params: () => ({ subProcesoId: this.subProcesoId(), regla: this.regla() }),
-    stream: ({ params }) => this.vistas.getPlantillaCaso(params.subProcesoId, params.regla),
+    params: () => this.reglaId(),
+    stream: ({ params }) => this.vistas.getPlantillaCaso(params),
   });
 
   /** Todos los bloques (las pestañas referencian bloques que no están en el layout). */
@@ -101,13 +118,13 @@ export class Detail {
     return plantilla ? layoutBlocks(plantilla) : [];
   });
 
-  /** Parámetros para resolver las rutas del contrato (`{subProcesoId}`, `{regla}`, `{casoId}`...). */
+  /** Parámetros para resolver `dataSource.path` y `dataSource.query` (`{conciliacionId}`, ...). */
   protected readonly pathParams = computed(() => ({
     proyectoId: this.proyectoId(),
     procesoId: this.procesoId(),
     subProcesoId: this.subProcesoId(),
-    regla: this.regla(),
-    casoId: this.casoId(),
+    reglaId: this.reglaId(),
+    conciliacionId: this.conciliacionId(),
   }));
 
   protected readonly hasError = computed(
@@ -119,7 +136,7 @@ export class Detail {
   );
 
   protected reload(): void {
-    for (const resource of [this.proyecto, this.proceso, this.subproceso, this.plantilla]) {
+    for (const resource of [this.proyecto, this.proceso, this.subproceso, this.regla, this.plantilla]) {
       if (resource.error()) {
         resource.reload();
       }

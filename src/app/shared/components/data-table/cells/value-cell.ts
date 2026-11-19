@@ -128,3 +128,38 @@ function unknownCell(cell: never, options: ValueCellOptions): ValueCellResolver 
   );
   return valueCellResolver({ component: 'TextCell' }, options);
 }
+
+/**
+ * Celda por defecto según el `tipo` de un dato del back (`DatoDetalleDto.tipo`). El swagger no
+ * fija los valores de `tipo`: se reconocen los nombres habituales y lo demás se pinta como texto.
+ * La plantilla puede cambiar cualquiera con `accordion.cellsByType`.
+ */
+const DEFAULT_TYPE_CELLS: readonly [readonly string[], ValueCellRef][] = [
+  [['moneda', 'currency', 'money', 'dinero', 'valor'], { component: 'CurrencyCell' }],
+  [
+    ['int', 'integer', 'int32', 'int64', 'long', 'entero'],
+    { component: 'NumberCell', inputs: { maximumFractionDigits: 0 } },
+  ],
+  [['decimal', 'double', 'float', 'number', 'numero', 'numeric'], { component: 'NumberCell' }],
+  [['datetime', 'fechahora', 'timestamp'], { component: 'DateCell', inputs: { dateStyle: 'medium', timeStyle: 'short' } }],
+  [['date', 'fecha'], { component: 'DateCell', inputs: { dateStyle: 'medium' } }],
+  [['bool', 'boolean', 'booleano'], { component: 'BooleanCell' }],
+];
+
+const normalizeType = (tipo: string) => tipo.trim().toLowerCase();
+
+/** Celda para un `tipo`: primero la de la plantilla, luego la por defecto y si no, texto. */
+export function cellForType(
+  tipo: string | null | undefined,
+  overrides: Readonly<Record<string, ValueCellRef>> = {},
+): ValueCellRef {
+  if (!tipo) {
+    return { component: 'TextCell' };
+  }
+  const key = normalizeType(tipo);
+  const override = Object.entries(overrides).find(([name]) => normalizeType(name) === key)?.[1];
+  return (
+    override ??
+    DEFAULT_TYPE_CELLS.find(([names]) => names.includes(key))?.[1] ?? { component: 'TextCell' }
+  );
+}

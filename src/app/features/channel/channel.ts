@@ -57,7 +57,7 @@ const features = tableFeatures({
 const column = createColumnHelper<typeof features, Regla>();
 
 const columns = column.columns([
-  column.accessor('nombre', {
+  column.accessor('nombreRegla', {
     header: () => flexRenderComponent(SortHeaderCell, { inputs: { label: 'Nombre de la regla' } }),
     cell: (info) => info.getValue(),
     // Orden alfabético en español (tildes y mayúsculas no alteran el orden).
@@ -86,8 +86,8 @@ const columns = column.columns([
       flexRenderComponent(LinkCell, {
         inputs: {
           label: 'Gestionar',
-          link: ['reglas', row.original.nombre],
-          context: row.original.nombre,
+          link: ['reglas', row.original.idRegla],
+          context: row.original.nombreRegla,
         },
       }),
     meta: { className: DATA_TABLE_CELL.hug },
@@ -166,7 +166,7 @@ export class Channel {
     features,
     columns,
     data: this.rows(),
-    getRowId: (row) => row.nombre,
+    getRowId: (row) => row.idRegla,
   }));
 
   protected readonly nombrePlataforma = computed(

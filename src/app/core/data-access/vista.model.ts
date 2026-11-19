@@ -46,20 +46,28 @@ export interface TableBlock {
   readonly table: TableDefinition;
 }
 
+/**
+ * Parámetros de consulta de una fuente de datos. Cada valor admite llaves `{param}` con los
+ * parámetros de la ruta del front: `{ "reglaId": "{reglaId}" }` → `?reglaId=<id de la URL>`.
+ */
+export type QueryParams = Readonly<Record<string, string>>;
+
 /** Fuente de un registro único (un objeto, no una lista paginada). */
 export interface RecordSource {
   /** Ruta relativa al API base con llaves `{param}` (parámetros de la ruta del front). */
   readonly path: string;
+  readonly query?: QueryParams;
 }
 
 /**
- * Acordeones (v1.1). Todos leen el mismo registro (`dataSource`); cada acordeón muestra una
- * lista de campos de ese registro.
+ * Acordeones (v1.1): uno por cada fuente (aplicativo) que devuelve `dataSource`, con la forma de
+ * `GET /Conciliaciones/fuentes-detalle` (`FuentesDetalle`). La plantilla solo decide cómo se
+ * presentan; las fuentes, sus datos y su orden vienen de la respuesta.
  */
 export interface AccordionBlock {
   readonly id: string;
   readonly type: 'accordion';
-  /** Título de la sección; admite plantillas `{campo}` del registro. */
+  /** Título de la sección; admite plantillas `{campo}` de la respuesta (fuera de `data`). */
   readonly title?: string;
   readonly dataSource: RecordSource;
   readonly accordion: AccordionDefinition;
@@ -70,37 +78,44 @@ export interface AccordionDefinition {
   readonly type?: 'single' | 'multiple';
   /** En pantallas anchas los acordeones se reparten, en orden, en 1 o 2 columnas de la pantalla. */
   readonly layoutColumns?: 1 | 2;
-  readonly items: readonly AccordionItemDefinition[];
+  /**
+   * `nombre` del dato que va como título de la tarjeta ("Número de guía" → "Número de guía:
+   * 70002333336"). Ese dato no se repite en la lista.
+   */
+  readonly titleField?: string;
+  /**
+   * Celda con la que se pinta cada dato según su `tipo` (`{ "decimal": { "component":
+   * "CurrencyCell" } }`). Un tipo que no está aquí usa la celda por defecto del front.
+   */
+  readonly cellsByType?: Readonly<Record<string, ValueCellRef>>;
+  /** Mensaje de una fuente sin datos, o cuando no llega ninguna fuente. */
+  readonly emptyState?: EmptyStateDefinition;
 }
 
-export interface AccordionItemDefinition {
-  readonly id: string;
+export interface EmptyStateDefinition {
   readonly title: string;
-  readonly defaultOpen?: boolean;
-  readonly content: FieldListDefinition;
+  readonly description?: string;
 }
 
-/** Contenido de un acordeón: título opcional y una columna por cada dato (encabezado / valor). */
-export interface FieldListDefinition {
-  /** Admite plantillas `{campo}` del registro ("Número de guía: {pagoEnCasa.numeroGuia}"). */
-  readonly title?: string;
-  /** Mensaje cuando ninguna columna trae dato. */
-  readonly emptyState?: { readonly title: string; readonly description?: string };
-  readonly columns: readonly FieldColumnDefinition[];
+/** Respuesta de la fuente de un bloque `accordion` (`GetConciliationFuentesDetailResponse`). */
+export interface FuentesDetalle {
+  readonly data?: readonly FuenteDetalle[] | null;
+  /** Campos adicionales, disponibles para `{campo}` en el título del bloque. */
+  readonly [campo: string]: unknown;
 }
 
-/**
- * Columna de un acordeón: el mismo vocabulario que la columna hoja de una tabla (`id`, `header`,
- * `accessorKey`, `cell`), pero con encabezado de texto y solo celdas que muestran un valor.
- */
-export interface FieldColumnDefinition {
-  readonly id: string;
-  /** Texto de la etiqueta del dato. */
-  readonly header: string;
-  /** Campo del registro; admite rutas con punto (`pagoEnCasa.estado`). */
-  readonly accessorKey: string;
-  /** Si falta, el valor se pinta con `TextCell`. */
-  readonly cell?: ValueCellRef;
+/** Un aplicativo y sus datos (`FuenteDetalleDto`). */
+export interface FuenteDetalle {
+  readonly nombre: string | null;
+  readonly datos: readonly DatoDetalle[] | null;
+}
+
+/** Un dato de un aplicativo (`DatoDetalleDto`). */
+export interface DatoDetalle {
+  readonly nombre: string | null;
+  /** Tipo del valor según el back (p. ej. `string`, `decimal`, `date`). */
+  readonly tipo: string | null;
+  readonly valor: unknown;
 }
 
 /** Pestañas (v1.1): cada una muestra otro bloque de la plantilla. */
@@ -133,6 +148,7 @@ export interface ColumnSortDefinition {
 export interface DataSource {
   /** Ruta relativa al API base con llaves `{param}` (parámetros de la ruta del front). */
   readonly path: string;
+  readonly query?: QueryParams;
   readonly pagination?: {
     readonly mode?: 'server' | 'none';
     readonly defaultPageSize?: number;
@@ -156,7 +172,7 @@ export interface TableDefinition {
   /** Campo de la fila que la identifica de forma única y estable (`getRowId`). */
   readonly rowId: string;
   readonly density?: 'default' | 'compact';
-  readonly emptyState?: { readonly title: string; readonly description?: string };
+  readonly emptyState?: EmptyStateDefinition;
   readonly selection?: TableSelection;
   readonly columns: readonly ColumnDefinition[];
 }
@@ -315,7 +331,7 @@ export type FilterRef =
 
 export type TableRow = Readonly<Record<string, unknown>>;
 
-/** Registro único de un bloque con `RecordSource` (contenido de `resultado`). */
+/** Objeto del que una celda lee sus campos (una fila o una respuesta completa). */
 export type ViewRecord = Readonly<Record<string, unknown>>;
 
 export interface TablePageSummary {
@@ -323,7 +339,7 @@ export interface TablePageSummary {
   readonly montoAfectado: number;
 }
 
-/** Página de datos de un bloque de tabla (contenido de `resultado`). */
+/** Página de datos de un bloque de tabla, ya normalizada por el front. */
 export interface TablePage {
   readonly pageNumber: number;
   readonly pageSize: number;
@@ -334,6 +350,20 @@ export interface TablePage {
   readonly filters?: Readonly<Record<string, unknown>>;
   readonly summary?: TablePageSummary;
   readonly rows: readonly TableRow[];
+}
+
+/**
+ * Página tal como la devuelve el back en el swagger
+ * (`GET /Conciliaciones/subprocesos-registros/reglas`, `GetConciliationRowsResponse`).
+ */
+export interface RegistrosPagina {
+  readonly casosTotales?: number | null;
+  readonly montoAfectado?: number | null;
+  readonly totalCount?: number | null;
+  readonly totalPages?: number | null;
+  readonly pageNumber?: number | null;
+  readonly pageSize?: number | null;
+  readonly data?: readonly TableRow[] | null;
 }
 
 /** Página de datos junto con la hora de la consulta ("Última actualización"). */

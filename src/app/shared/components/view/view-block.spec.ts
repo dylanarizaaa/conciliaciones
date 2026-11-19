@@ -31,6 +31,7 @@ const TABLA: TableBlock = {
   title: 'Movimientos',
   dataSource: {
     path: '/casos/{casoId}/movimientos',
+    query: { origen: 'detalle', caso: '{casoId}' },
     pagination: { mode: 'server', defaultPageSize: 2 },
     sorting: { mode: 'server', default: [{ id: 'fecha', desc: true }] },
   },
@@ -147,6 +148,8 @@ describe('ViewBlockOutlet', () => {
     http.expectOne(
       (req) =>
         req.url === '/api/casos/C%201/movimientos' &&
+        req.params.get('origen') === 'detalle' &&
+        req.params.get('caso') === 'C 1' &&
         req.params.get('pageNumber') === String(page) &&
         req.params.get('pageSize') === '2' &&
         req.params.get('sort') === sort,

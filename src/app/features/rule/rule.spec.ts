@@ -13,21 +13,34 @@ import { API_BASE_URL } from '../../core/config/api-base-url';
 import type { ProcesosResultado } from '../../core/data-access/proceso.model';
 import type { ProyectosResultado } from '../../core/data-access/proyecto.model';
 import type { SubprocesosResultado } from '../../core/data-access/subproceso.model';
-import type { TablePage, TableRow, ViewTemplate } from '../../core/data-access/vista.model';
+import type {
+  RegistrosPagina,
+  TableRow,
+  ViewTemplate,
+} from '../../core/data-access/vista.model';
 import type { ApiResponse } from '../../core/http/api-response';
-import casosEjemplo from '../../../../docs/contrato-vista/ejemplos/casos.response.json';
+import { formatDateTime } from '../../core/format/formatters';
+import cambioEstadoEjemplo from '../../../../docs/contrato-vista/ejemplos/cambio-estado.response.json';
 import plantillaEjemplo from '../../../../docs/contrato-vista/ejemplos/plantilla.response.json';
-import resolverEjemplo from '../../../../docs/contrato-vista/ejemplos/resolver.response.json';
-import type { ResolucionDiferencias } from '../../core/data-access/regla.model';
+import registrosEjemplo from '../../../../docs/contrato-vista/ejemplos/registros.response.json';
+import reporteEjemplo from '../../../../docs/contrato-vista/ejemplos/reporte.response.json';
+import type {
+  ReglasPagina,
+  ReporteRespuesta,
+  ResolucionDiferencias,
+} from '../../core/data-access/regla.model';
 import { Rule } from './rule';
 
-/** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`). */
-const PLANTILLA_REGLA = (plantillaEjemplo as unknown as ApiResponse<ViewTemplate>).resultado;
-const DATOS_REGLA = (casosEjemplo as unknown as ApiResponse<TablePage>).resultado;
-const RESOLUCION = (resolverEjemplo as unknown as ApiResponse<ResolucionDiferencias>).resultado;
+/** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`, forma del swagger). */
+const PLANTILLA_REGLA = (plantillaEjemplo as unknown as ApiResponse<{ plantilla: ViewTemplate }>).resultado
+  .plantilla;
+const DATOS_REGLA = (registrosEjemplo as unknown as ApiResponse<RegistrosPagina>).resultado;
+const FILAS = DATOS_REGLA.data as TableRow[];
+const RESOLUCION = (cambioEstadoEjemplo as unknown as ApiResponse<ResolucionDiferencias>).resultado;
+const REPORTE = (reporteEjemplo as unknown as ApiResponse<ReporteRespuesta>).resultado;
 
-const BASE = '/plataformas/p1/categorias/c1/canales/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
-const RULE_API = '/api/Conciliaciones/subprocesos/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
+const REGLA_ID = 'r-cambio';
+const BASE = `/plataformas/p1/categorias/c1/canales/s1/reglas/${REGLA_ID}`;
 const SELECT_ALL = 'button[aria-label="Seleccionar todas las diferencias de la página"]';
 
 function ok<T>(resultado: T): ApiResponse<T> {
@@ -54,15 +67,29 @@ const SUBPROCESOS: SubprocesosResultado = {
   totalAfectado: 0,
   data: [{ subProcesoId: 's1', nombreSubProceso: 'Pago en Casa', monto: 0, cantidad: 10 }],
 };
+/** Listado de reglas del canal: de ahí sale el nombre de la regla (la URL trae su id). */
+const REGLAS: ReglasPagina = {
+  casosTotales: 10,
+  montoAfectado: 4800000,
+  pageNumber: 1,
+  pageSize: 50,
+  totalPages: 1,
+  data: [{ idRegla: REGLA_ID, nombreRegla: 'Cambio de estado logístico', casos: 10, monto: 4800000 }],
+};
 
-function pagina(overrides: Partial<TablePage> = {}): TablePage {
+function pagina(overrides: Partial<RegistrosPagina> = {}): RegistrosPagina {
   return { ...DATOS_REGLA, ...overrides };
 }
 
 /** Filas de otra página: mismos datos con otros ids. */
 function otrasFilas(): TableRow[] {
-  return DATOS_REGLA.rows.map((row, index) => ({ ...row, idCaso: `CASO-P2-${index}` }));
+  return FILAS.map((row, index) => ({ ...row, conciliacionId: `p2-${index}` }));
 }
+
+const idDe = (cliente: string) =>
+  FILAS.find(
+    (row) => (row['fuentePrepagoDetalleCliente'] as { nombreCompleto: string }).nombreCompleto === cliente,
+  )!['conciliacionId'] as string;
 
 const text = (element: Element | null | undefined) =>
   element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
@@ -78,7 +105,7 @@ describe('Rule', () => {
         provideRouter(
           [
             {
-              path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:regla',
+              path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId',
               component: Rule,
             },
           ],
@@ -103,22 +130,41 @@ describe('Rule', () => {
     http.expectOne('/api/Conciliaciones/proyectos').flush(ok(PROYECTOS));
     http.expectOne((req) => req.url === '/api/Conciliaciones/procesos').flush(ok(PROCESOS));
     http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos').flush(ok(SUBPROCESOS));
+    http
+      .expectOne(
+        (req) =>
+          req.url === '/api/Conciliaciones/subprocesos/reglas' &&
+          req.params.get('subProcesoId') === 's1' &&
+          req.params.get('pageNumber') === '1',
+      )
+      .flush(ok(REGLAS));
   }
 
+  /** `GET /Conciliaciones/subprocesos-ui/plantilla?reglaId=&tipoBlock=1`. */
   function expectPlantilla(): TestRequest {
-    return http.expectOne(`${RULE_API}/plantilla`);
+    return http.expectOne(
+      (req) =>
+        req.url === '/api/Conciliaciones/subprocesos-ui/plantilla' &&
+        req.params.get('reglaId') === REGLA_ID &&
+        req.params.get('tipoBlock') === '1',
+    );
   }
 
-  function expectDatos(page = 1, sort: string | null = null): TestRequest {
+  /** `GET /Conciliaciones/subprocesos-registros/reglas` (ruta y `reglaId` los declara la plantilla). */
+  function expectDatos(page = 1): TestRequest {
     return http.expectOne(
       (req) =>
         req.method === 'GET' &&
-        req.url === `${RULE_API}/casos` &&
+        req.url === '/api/Conciliaciones/subprocesos-registros/reglas' &&
+        req.params.get('reglaId') === REGLA_ID &&
         req.params.get('pageNumber') === String(page) &&
         req.params.get('pageSize') === '10' &&
-        req.params.get('sort') === sort,
+        // El swagger no admite orden: con `sorting.mode: "client"` no se envía.
+        !req.params.has('sort'),
     );
   }
+
+  const CAMBIO_ESTADO = '/api/Conciliaciones/cambio-estado';
 
   /** Deja correr efectos y microtareas sin esperar las peticiones que siguen pendientes. */
   async function settle(): Promise<void> {
@@ -135,10 +181,10 @@ describe('Rule', () => {
   }
 
   /** Carga completa: nombres, plantilla y la primera página de datos. */
-  async function cargar(datos: TablePage = pagina()): Promise<void> {
+  async function cargar(datos: RegistrosPagina = pagina()): Promise<void> {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok(PLANTILLA_REGLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA_REGLA }));
     await settle();
     expectDatos().flush(ok(datos));
     await stable();
@@ -167,7 +213,7 @@ describe('Rule', () => {
     expect(element.querySelector('app-data-table')).toBeNull();
 
     flushNombres();
-    expectPlantilla().flush(ok(PLANTILLA_REGLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA_REGLA }));
     await settle();
 
     // Con la plantilla ya se conocen las columnas: encabezados reales y filas skeleton.
@@ -236,7 +282,7 @@ describe('Rule', () => {
     expect(detalle.getAttribute('aria-label')).toBe(
       'Ver detalle de la diferencia de Juan Pablo Rodríguez',
     );
-    expect(detalle.getAttribute('href')).toBe(`${BASE}/casos/CASO-3452`);
+    expect(detalle.getAttribute('href')).toBe(`${BASE}/casos/${idDe('Juan Pablo Rodríguez')}`);
 
     expect(contador()).toBe('0 Seleccionados');
     expect(button('Resolver diferencias').disabled).toBe(true);
@@ -270,9 +316,11 @@ describe('Rule', () => {
     const resolverBtn = button('Resolver diferencias');
     resolverBtn.click();
     harness.detectChanges();
-    const resolver = http.expectOne(`${RULE_API}/casos/resolver`);
-    expect(resolver.request.method).toBe('POST');
-    expect(resolver.request.body).toEqual({ ids: ['CASO-3452', 'CASO-3453'] });
+    const resolver = http.expectOne(CAMBIO_ESTADO);
+    expect(resolver.request.method).toBe('PUT');
+    expect(resolver.request.body).toEqual({
+      conciliacionId: [idDe('Juan Pablo Rodríguez'), idDe('Diego Alejandro Silva')],
+    });
 
     // Cargando: conserva el texto y el foco, anuncia aria-busy e ignora más clics.
     expect(text(resolverBtn)).toBe('Resolver diferencias');
@@ -280,12 +328,12 @@ describe('Rule', () => {
     expect(resolverBtn.disabled).toBe(false);
     expect(resolverBtn.querySelector('ng-icon')).not.toBeNull();
     resolverBtn.click();
-    http.expectNone(`${RULE_API}/casos/resolver`);
+    http.expectNone(CAMBIO_ESTADO);
     expect(document.querySelector('[role="dialog"]')).toBeNull();
 
     resolver.flush(ok(RESOLUCION));
     await settle();
-    expectDatos().flush(ok(pagina({ rows: DATOS_REGLA.rows.slice(2), totalRows: 8 })));
+    expectDatos().flush(ok(pagina({ data: FILAS.slice(2), totalCount: 8 })));
     await stable();
 
     // El dialog de spartan vive en el overlay de CDK, fuera del componente.
@@ -303,8 +351,10 @@ describe('Rule', () => {
         text(item.querySelector('dd')),
       ]),
     ).toEqual([
-      ['Validado por:', 'Alexander Tipacoque'],
-      ['Fecha de validación:', '19/08/2026'],
+      // El swagger no trae quién validó ni cuándo: la fecha es la de la respuesta.
+      ['Fecha de validación:', formatDateTime(new Date(), { dateStyle: 'medium' })],
+      ['Casos actualizados:', '2'],
+      ['Casos no encontrados:', '1'],
     ]);
     expect(dialog.querySelector('[aria-label="Cerrar"]')).not.toBeNull();
     expect(resolverBtn.hasAttribute('aria-busy')).toBe(false);
@@ -343,7 +393,7 @@ describe('Rule', () => {
     try {
       await navigate();
       flushNombres();
-      expectPlantilla().flush(ok(sinSeleccion));
+      expectPlantilla().flush(ok({ plantilla: sinSeleccion }));
       await settle();
       expectDatos().flush(ok(pagina()));
       await stable();
@@ -353,7 +403,7 @@ describe('Rule', () => {
       const resolver = button('Resolver diferencias');
       expect(resolver.disabled).toBe(true);
       resolver.click();
-      http.expectNone(`${RULE_API}/casos/resolver`);
+      http.expectNone(CAMBIO_ESTADO);
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('no trae selección de filas'));
       // La descarga no depende de la selección.
       expect(button('Descargar reporte').disabled).toBe(false);
@@ -368,9 +418,7 @@ describe('Rule', () => {
     await stable();
 
     button('Resolver diferencias').click();
-    http
-      .expectOne(`${RULE_API}/casos/resolver`)
-      .flush(null, { status: 500, statusText: 'Server Error' });
+    http.expectOne(CAMBIO_ESTADO).flush(null, { status: 500, statusText: 'Server Error' });
     await stable();
 
     const error = element.querySelector('app-error-state');
@@ -379,14 +427,16 @@ describe('Rule', () => {
     expect(contador()).toBe('1 Seleccionado');
 
     button('Reintentar').click();
-    http.expectOne(`${RULE_API}/casos/resolver`).flush(ok({ procesados: 1 }));
+    http
+      .expectOne(CAMBIO_ESTADO)
+      .flush(ok({ actualizados: [idDe('Juan Pablo Rodríguez')], noEncontrados: [], totalProcesados: 1 }));
     await settle();
     expectDatos().flush(ok(pagina()));
     await stable();
     expect(element.querySelector('app-error-state')).toBeNull();
   });
 
-  it('ordena en el servidor desde el encabezado y guarda el orden en la URL', async () => {
+  it('ordena la página en el navegador (el swagger no admite orden) y guarda el orden en la URL', async () => {
     await cargar();
     const nombre = [...element.querySelectorAll('thead th')][1];
     expect(nombre.getAttribute('aria-sort')).toBe('none');
@@ -394,18 +444,24 @@ describe('Rule', () => {
     const navegacion = nextNavigation();
     nombre.querySelector('button')!.click();
     await navegacion;
-    await settle();
+    await stable();
 
     expect(TestBed.inject(Router).url).toBe(`${BASE}?orden=nombreCliente:asc`);
-    expectDatos(1, 'nombreCliente:asc').flush(ok(pagina()));
-    await stable();
+    // `afterEach` comprueba que no se volvió a pedir la página.
     expect(nombre.getAttribute('aria-sort')).toBe('ascending');
+    const nombres = [...element.querySelectorAll('tbody tr')].map((fila) =>
+      text(fila.querySelectorAll('td')[1]),
+    );
+    expect(nombres).toEqual(
+      [...nombres].sort((a, b) => (a.toLowerCase() < b.toLowerCase() ? -1 : a.toLowerCase() > b.toLowerCase() ? 1 : 0)),
+    );
+    expect(nombres[0]).not.toBe('Juan Pablo Rodríguez');
     // Las columnas sin orden (checks, acción) no anuncian aria-sort.
     expect([...element.querySelectorAll('thead th')][13].hasAttribute('aria-sort')).toBe(false);
   });
 
   it('pagina en el servidor y conserva la selección entre páginas', async () => {
-    await cargar(pagina({ totalRows: 20, totalPages: 2 }));
+    await cargar(pagina({ totalCount: 20, totalPages: 2 }));
     element.querySelector<HTMLButtonElement>(SELECT_ALL)!.click();
     await stable();
     expect(contador()).toBe('10 Seleccionados');
@@ -415,7 +471,7 @@ describe('Rule', () => {
     await navegacion;
     await settle();
     expect(TestBed.inject(Router).url).toBe(`${BASE}?pagina=2`);
-    expectDatos(2).flush(ok(pagina({ pageNumber: 2, totalRows: 20, totalPages: 2, rows: otrasFilas() })));
+    expectDatos(2).flush(ok(pagina({ pageNumber: 2, totalCount: 20, totalPages: 2, data: otrasFilas() })));
     await stable();
 
     expect(contador()).toBe('10 Seleccionados');
@@ -425,8 +481,12 @@ describe('Rule', () => {
     expect(contador()).toBe('11 Seleccionados');
   });
 
-  it('descarga el reporte con el nombre de la plantilla', async () => {
-    const createObjectURL = jest.fn(() => 'blob:reporte');
+  it('descarga el Excel del back con el nombre que propone', async () => {
+    const blobs: Blob[] = [];
+    const createObjectURL = jest.fn((blob: Blob) => {
+      blobs.push(blob);
+      return 'blob:reporte';
+    });
     const revokeObjectURL = jest.fn();
     Object.defineProperty(window.URL, 'createObjectURL', { configurable: true, value: createObjectURL });
     Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: revokeObjectURL });
@@ -440,15 +500,26 @@ describe('Rule', () => {
     try {
       await cargar();
       button('Descargar reporte').click();
-      const reporte = http.expectOne(`${RULE_API}/casos/reporte`);
-      expect(reporte.request.responseType).toBe('blob');
-      reporte.flush(new Blob(['Nombre del cliente;Estado'], { type: 'text/csv' }));
+      const reporte = http.expectOne(
+        (req) => req.url === '/api/Informes/export-excel' && req.params.get('reglaId') === REGLA_ID,
+      );
+      reporte.flush(ok(REPORTE));
       await stable();
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
-      // Sin tildes ni espacios: Chromium ignora `download` con caracteres no ASCII.
-      expect(descargas).toEqual(['diferencias-cambio-de-estado-logistico.csv']);
-      expect(mensajes()[1]).toBe('Descargamos el archivo diferencias-cambio-de-estado-logistico.csv.');
+      expect(blobs[0].type).toBe(REPORTE.contentType);
+      // El base64 se decodifica a los bytes del archivo.
+      expect(blobs[0].size).toBe(atob(REPORTE.archivoBase64!).length);
+      expect(descargas).toEqual(['diferencias-cambio-de-estado-logistico.xlsx']);
+      expect(mensajes()[1]).toBe('Descargamos el archivo diferencias-cambio-de-estado-logistico.xlsx.');
+
+      // Sin nombre del back, se arma con el de la regla (sin tildes ni espacios).
+      button('Descargar reporte').click();
+      http
+        .expectOne((req) => req.url === '/api/Informes/export-excel')
+        .flush(ok({ ...REPORTE, nombreArchivo: null }));
+      await stable();
+      expect(descargas[1]).toBe('diferencias-cambio-de-estado-logistico.xlsx');
     } finally {
       click.mockRestore();
       delete (window.URL as { createObjectURL?: unknown }).createObjectURL;
@@ -456,8 +527,19 @@ describe('Rule', () => {
     }
   });
 
+  it('si el reporte llega vacío, muestra el error de la acción', async () => {
+    await cargar();
+    button('Descargar reporte').click();
+    http
+      .expectOne((req) => req.url === '/api/Informes/export-excel')
+      .flush(ok({ archivoBase64: null, nombreArchivo: null, contentType: null }));
+    await stable();
+
+    expect(text(element.querySelector('app-error-state'))).toContain('No pudimos completar "Descargar reporte".');
+  });
+
   it('muestra el estado vacío definido en la plantilla', async () => {
-    await cargar(pagina({ totalRows: 0, totalPages: 0, rows: [], summary: { casosTotales: 0, montoAfectado: 0 } }));
+    await cargar(pagina({ totalCount: 0, totalPages: 0, data: [], casosTotales: 0, montoAfectado: 0 }));
 
     expect([...element.querySelectorAll('app-empty-state p')].map(text)).toEqual([
       'No hay diferencias por resolver en esta regla.',
@@ -470,7 +552,7 @@ describe('Rule', () => {
   it('muestra un error si la plantilla es de una versión no soportada y permite reintentar', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ ...PLANTILLA_REGLA, schemaVersion: '2.0.0' } satisfies ViewTemplate));
+    expectPlantilla().flush(ok({ plantilla: { ...PLANTILLA_REGLA, schemaVersion: '2.0.0' } satisfies ViewTemplate }));
     await stable();
 
     const error = element.querySelector('app-error-state');
@@ -478,11 +560,53 @@ describe('Rule', () => {
 
     button('Reintentar').click();
     await settle();
-    expectPlantilla().flush(ok(PLANTILLA_REGLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA_REGLA }));
     await settle();
     expectDatos().flush(ok(pagina()));
     await stable();
     expect(element.querySelector('app-error-state')).toBeNull();
     expect(element.querySelectorAll('tbody tr')).toHaveLength(10);
+  });
+
+  it('acepta la plantilla guardada como texto JSON', async () => {
+    await navigate();
+    flushNombres();
+    expectPlantilla().flush(ok({ plantilla: JSON.stringify(PLANTILLA_REGLA) }));
+    await settle();
+    expectDatos().flush(ok(pagina()));
+    await stable();
+
+    expect(element.querySelectorAll('tbody tr')).toHaveLength(10);
+  });
+
+  it('usa "Validado por" y la fecha del back si los envía', async () => {
+    await cargar();
+    rowCheckbox('Juan Pablo Rodríguez').click();
+    await stable();
+    button('Resolver diferencias').click();
+    http.expectOne(CAMBIO_ESTADO).flush(
+      ok({
+        actualizados: [idDe('Juan Pablo Rodríguez')],
+        noEncontrados: [],
+        totalProcesados: 1,
+        validadoPor: 'Alexander Tipacoque',
+        fechaValidacion: '2026-08-19T11:35:00-05:00',
+      }),
+    );
+    await settle();
+    expectDatos().flush(ok(pagina()));
+    await stable();
+
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(
+      [...dialog.querySelectorAll('dl > div')].map((item) => [
+        text(item.querySelector('dt')),
+        text(item.querySelector('dd')),
+      ]),
+    ).toEqual([
+      ['Validado por:', 'Alexander Tipacoque'],
+      ['Fecha de validación:', '19/08/2026'],
+      ['Casos actualizados:', '1'],
+    ]);
   });
 });

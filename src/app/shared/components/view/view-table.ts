@@ -7,7 +7,7 @@ import {
   type Updater,
 } from '@tanstack/angular-table';
 import type { TableBlock, TablePageConsulta, TableRow } from '../../../core/data-access/vista.model';
-import { leafColumnsOf, resolveApiPath } from '../../../core/data-access/vista.utils';
+import { leafColumnsOf, resolveApiPath, resolveQuery } from '../../../core/data-access/vista.utils';
 import { VistasService } from '../../../core/data-access/vistas.service';
 import { resourceValue } from '../../../core/resource/resource-value';
 import { DataTable } from '../data-table/data-table';
@@ -95,6 +95,7 @@ export class ViewTable {
 
   private readonly definicion = computed(() => buildTemplateTable(this.block().table));
   private readonly path = computed(() => resolveApiPath(this.block().dataSource.path, this.params()));
+  private readonly query = computed(() => resolveQuery(this.block().dataSource.query, this.params()));
 
   protected readonly paginated = computed(
     () => (this.block().dataSource.pagination?.mode ?? 'server') === 'server',
@@ -124,13 +125,14 @@ export class ViewTable {
 
   /** Página actual (desde 1); vuelve a la primera al cambiar de datos o de orden en el servidor. */
   protected readonly page = linkedSignal<unknown, number>({
-    source: () => [this.path(), this.serverSorting() ? this.sorting() : null],
+    source: () => [this.path(), this.query(), this.serverSorting() ? this.sorting() : null],
     computation: () => 1,
   });
 
   protected readonly datos = rxResource({
     params: () => ({
       path: this.path(),
+      query: this.query(),
       ...(this.paginated() ? { pageNumber: this.page(), pageSize: this.pageSize() } : {}),
       sort: this.serverSorting() ? this.sorting() : [],
     }),
@@ -167,7 +169,7 @@ export class ViewTable {
 
   /** Filas marcadas, por `rowId` (solo si la plantilla trae columna de selección). */
   private readonly rowSelection = linkedSignal<unknown, RowSelectionState>({
-    source: () => this.path(),
+    source: () => [this.path(), this.query()],
     computation: () => ({}),
   });
 

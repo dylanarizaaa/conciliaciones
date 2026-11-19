@@ -22,13 +22,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/channel/channel').then((m) => m.Channel),
   },
   {
-    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:regla',
+    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId',
     title: 'Regla | Conciliaciones',
     loadComponent: () => import('./features/rule/rule').then((m) => m.Rule),
   },
   {
-    // "Ver detalle" de un caso de la regla.
-    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:regla/casos/:casoId',
+    // "Ver detalle" de un caso (conciliación) de la regla.
+    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
     title: 'Detalle | Conciliaciones',
     loadComponent: () => import('./features/rule/detail/detail').then((m) => m.Detail),
   },

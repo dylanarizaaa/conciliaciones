@@ -34,6 +34,7 @@ import {
   leafColumnsOf,
   parseSorting,
   resolveApiPath,
+  resolveQuery,
   serializeSorting,
 } from '../../core/data-access/vista.utils';
 import { VistasService } from '../../core/data-access/vistas.service';
@@ -85,12 +86,19 @@ const ETIQUETAS: Readonly<Record<Accion, string>> = {
   descargar: 'Descargar reporte',
 };
 
-/** Datos del modal "Conciliación procesada" leídos de la respuesta del servicio. */
-function resolucionItems(respuesta: ResolucionDiferencias): ResultDialogItem[] {
-  const fecha = toDate(respuesta?.fechaValidacion);
+/**
+ * Datos del modal "Conciliación procesada" leídos de la respuesta de `cambio-estado`. El swagger
+ * no trae quién validó ni cuándo: "Validado por" solo aparece si el back lo envía, y la fecha es
+ * la del back o, si no la envía, la hora en que llegó la respuesta.
+ */
+function resolucionItems(respuesta: ResolucionDiferencias, recibidaEn: Date): ResultDialogItem[] {
+  const fecha = toDate(respuesta.fechaValidacion) ?? recibidaEn;
+  const noEncontrados = respuesta.noEncontrados.length;
   return [
-    ...(respuesta?.validadoPor ? [{ label: 'Validado por', value: respuesta.validadoPor }] : []),
-    ...(fecha ? [{ label: 'Fecha de validación', value: formatDateTime(fecha, { dateStyle: 'medium' }) }] : []),
+    ...(respuesta.validadoPor ? [{ label: 'Validado por', value: respuesta.validadoPor }] : []),
+    { label: 'Fecha de validación', value: formatDateTime(fecha, { dateStyle: 'medium' }) },
+    { label: 'Casos actualizados', value: formatInteger(respuesta.actualizados.length) },
+    ...(noEncontrados > 0 ? [{ label: 'Casos no encontrados', value: formatInteger(noEncontrados) }] : []),
   ];
 }
 
@@ -132,11 +140,11 @@ export class Rule {
   private readonly vistas = inject(VistasService);
   private readonly reglas = inject(ReglasService);
 
-  /** Parámetros de ruta `:proyectoId`, `:procesoId`, `:subProcesoId` y `:regla`. */
+  /** Parámetros de ruta `:proyectoId`, `:procesoId`, `:subProcesoId` y `:reglaId`. */
   readonly proyectoId = injectRouteParam('proyectoId');
   readonly procesoId = injectRouteParam('procesoId');
   readonly subProcesoId = injectRouteParam('subProcesoId');
-  readonly regla = injectRouteParam('regla');
+  readonly reglaId = injectRouteParam('reglaId');
   /** Query param `?pagina=` (desde 1). */
   readonly pagina = injectQueryParam('pagina');
   /** Query param `?orden=campo:asc|desc`. */
@@ -162,11 +170,17 @@ export class Rule {
       this.subprocesosService.getSubproceso(params.procesoId, params.subProcesoId),
   });
 
+  /** La URL trae el id de la regla; el nombre sale del listado de reglas del canal. */
+  protected readonly regla = rxResource({
+    params: () => ({ subProcesoId: this.subProcesoId(), reglaId: this.reglaId() }),
+    stream: ({ params }) => this.reglas.getRegla(params.subProcesoId, params.reglaId),
+  });
+
   // --- Plantilla y datos ----------------------------------------------------------------------
 
   protected readonly plantilla = rxResource({
-    params: () => ({ subProcesoId: this.subProcesoId(), regla: this.regla() }),
-    stream: ({ params }) => this.vistas.getPlantillaRegla(params.subProcesoId, params.regla),
+    params: () => this.reglaId(),
+    stream: ({ params }) => this.vistas.getPlantillaRegla(params),
   });
 
   /** Bloque de tabla de la plantilla (hoy la vista trae uno solo). */
@@ -181,12 +195,12 @@ export class Rule {
     return bloque ? buildTemplateTable(bloque.table) : undefined;
   });
 
-  /** Parámetros para resolver las rutas del contrato (`{subProcesoId}`, `{regla}`, ...). */
+  /** Parámetros para resolver `dataSource.path` y `dataSource.query` (`{reglaId}`, ...). */
   private readonly pathParams = computed(() => ({
     proyectoId: this.proyectoId(),
     procesoId: this.procesoId(),
     subProcesoId: this.subProcesoId(),
-    regla: this.regla(),
+    reglaId: this.reglaId(),
   }));
 
   protected readonly pageNumber = computed(() => {
@@ -227,6 +241,7 @@ export class Rule {
       }
       return {
         path: resolveApiPath(bloque.dataSource.path, this.pathParams()),
+        query: resolveQuery(bloque.dataSource.query, this.pathParams()),
         pageNumber: this.pageNumber(),
         pageSize: this.pageSize(),
         sort: this.serverSorting() ? this.sorting() : [],
@@ -254,8 +269,8 @@ export class Rule {
   protected readonly rowSelection = linkedSignal<unknown, RowSelectionState>({
     source: () =>
       this.bloque()?.table.selection?.persistAcrossPages === false
-        ? `${this.regla()}#${this.pageNumber()}`
-        : this.regla(),
+        ? `${this.reglaId()}#${this.pageNumber()}`
+        : this.reglaId(),
     computation: () => ({}),
   });
 
@@ -303,9 +318,15 @@ export class Rule {
   protected readonly nombreCanal = computed(
     () => resourceValue(this.subproceso)?.nombreSubProceso ?? 'Canal',
   );
+  /** Si la regla no aparece en el listado del canal, la pantalla sigue funcionando sin su nombre. */
+  protected readonly nombreRegla = computed(() => resourceValue(this.regla)?.nombreRegla ?? 'Regla');
 
   protected readonly headerLoading = computed(
-    () => this.proyecto.isLoading() || this.proceso.isLoading() || this.subproceso.isLoading(),
+    () =>
+      this.proyecto.isLoading() ||
+      this.proceso.isLoading() ||
+      this.subproceso.isLoading() ||
+      this.regla.isLoading(),
   );
 
   protected readonly breadcrumbs = computed<readonly PageHeaderBreadcrumb[]>(() => [
@@ -313,7 +334,7 @@ export class Rule {
     { label: this.nombrePlataforma(), link: PLATAFORMA_LINK },
     { label: this.nombreCategoria(), link: CATEGORIA_LINK },
     { label: this.nombreCanal(), link: CANAL_LINK },
-    { label: this.regla() },
+    { label: this.nombreRegla() },
   ]);
 
   protected readonly hasError = computed(
@@ -400,7 +421,7 @@ export class Rule {
       const definicion = this.definicion();
       if (definicion && !definicion.selectable) {
         console.warn(
-          `[Regla] La plantilla de "${this.regla()}" no trae selección de filas ` +
+          `[Regla] La plantilla de "${this.nombreRegla()}" no trae selección de filas ` +
             '(table.selection + RowCheckbox): "Resolver diferencias" queda deshabilitado.',
         );
       }
@@ -413,22 +434,25 @@ export class Rule {
       return;
     }
     const ids = this.selectedIds();
-    this.run('resolver', this.reglas.resolverDiferencias(this.subProcesoId(), this.regla(), ids), (respuesta) => {
+    this.run('resolver', this.reglas.resolverDiferencias(ids), (respuesta) => {
       this.rowSelection.set({});
       this.datos.reload();
       // El modal se anuncia solo (rol dialog + título); no hace falta el mensaje de estado.
-      this.resolucion.set(resolucionItems(respuesta));
+      this.resolucion.set(resolucionItems(respuesta, new Date()));
       this.resolucionAbierta.set(true);
     });
   }
 
-  /** Descarga el reporte con el orden actual de la tabla. */
+  /** Descarga el reporte en Excel de la regla, con el nombre que propone el back. */
   protected descargar(): void {
     if (!this.puedeDescargar()) {
       return;
     }
-    const fileName = safeFileName(`diferencias-${this.regla()}.csv`, 'diferencias');
-    this.run('descargar', this.reglas.descargarReporte(this.subProcesoId(), this.regla(), this.sorting()), (blob) => {
+    this.run('descargar', this.reglas.descargarReporte(this.reglaId()), ({ blob, nombreArchivo }) => {
+      const fileName = safeFileName(
+        nombreArchivo ?? `diferencias-${this.nombreRegla()}.xlsx`,
+        'diferencias',
+      );
       saveFile(this.document, blob, fileName);
       this.mensajeAccion.set(`Descargamos el archivo ${fileName}.`);
     });
@@ -452,7 +476,7 @@ export class Rule {
   }
 
   protected reload(): void {
-    for (const resource of [this.proyecto, this.proceso, this.subproceso, this.plantilla, this.datos]) {
+    for (const resource of [this.proyecto, this.proceso, this.subproceso, this.regla, this.plantilla, this.datos]) {
       if (resource.error()) {
         resource.reload();
       }

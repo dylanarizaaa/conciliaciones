@@ -8,30 +8,34 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
-import casoEjemplo from '../../../../../docs/contrato-vista/ejemplos/detalle-caso.response.json';
+import fuentesEjemplo from '../../../../../docs/contrato-vista/ejemplos/fuentes-detalle.response.json';
 import historialEjemplo from '../../../../../docs/contrato-vista/ejemplos/detalle-historial.response.json';
 import plantillaEjemplo from '../../../../../docs/contrato-vista/ejemplos/detalle-plantilla.response.json';
 import { API_BASE_URL } from '../../../core/config/api-base-url';
 import type { ProcesosResultado } from '../../../core/data-access/proceso.model';
 import type { ProyectosResultado } from '../../../core/data-access/proyecto.model';
+import type { ReglasPagina } from '../../../core/data-access/regla.model';
 import type { SubprocesosResultado } from '../../../core/data-access/subproceso.model';
 import type {
-  TablePage,
+  AccordionBlock,
+  FuentesDetalle,
+  RegistrosPagina,
   ViewBlock,
-  ViewRecord,
   ViewTemplate,
 } from '../../../core/data-access/vista.model';
 import type { ApiResponse } from '../../../core/http/api-response';
 import { Detail } from './detail';
 
-/** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`). */
-const PLANTILLA = (plantillaEjemplo as unknown as ApiResponse<ViewTemplate>).resultado;
-const CASO = (casoEjemplo as unknown as ApiResponse<ViewRecord>).resultado;
-const HISTORIAL = (historialEjemplo as unknown as ApiResponse<TablePage>).resultado;
+/** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`, forma del swagger). */
+const PLANTILLA = (plantillaEjemplo as unknown as ApiResponse<{ plantilla: ViewTemplate }>).resultado
+  .plantilla;
+const FUENTES = (fuentesEjemplo as unknown as ApiResponse<FuentesDetalle>).resultado;
+const HISTORIAL = (historialEjemplo as unknown as ApiResponse<RegistrosPagina>).resultado;
 
-const RULE = '/plataformas/p1/categorias/c1/canales/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
-const BASE = `${RULE}/casos/CASO-3452`;
-const RULE_API = '/api/Conciliaciones/subprocesos/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico';
+const REGLA_ID = 'r-cambio';
+const CONCILIACION_ID = '8c20e2c1-408a-57a8-96bb-3b3705ea1341';
+const RULE = `/plataformas/p1/categorias/c1/canales/s1/reglas/${REGLA_ID}`;
+const BASE = `${RULE}/casos/${CONCILIACION_ID}`;
 const TAB_ID = 'brn-tabs-label-pestanas-historial';
 
 function ok<T>(resultado: T): ApiResponse<T> {
@@ -58,6 +62,26 @@ const SUBPROCESOS: SubprocesosResultado = {
   totalAfectado: 0,
   data: [{ subProcesoId: 's1', nombreSubProceso: 'Pago en Casa', monto: 0, cantidad: 10 }],
 };
+const REGLAS: ReglasPagina = {
+  casosTotales: 10,
+  montoAfectado: 4800000,
+  pageNumber: 1,
+  pageSize: 50,
+  totalPages: 1,
+  data: [{ idRegla: REGLA_ID, nombreRegla: 'Cambio de estado logístico', casos: 10, monto: 4800000 }],
+};
+
+/** Plantilla del ejemplo con cambios en su bloque de acordeones. */
+function conAcordeon(cambios: Partial<AccordionBlock>, accordion: Partial<AccordionBlock['accordion']> = {}): ViewTemplate {
+  return {
+    ...PLANTILLA,
+    blocks: PLANTILLA.blocks.map((block) =>
+      block.type === 'accordion'
+        ? { ...block, ...cambios, accordion: { ...block.accordion, ...accordion } }
+        : block,
+    ),
+  };
+}
 
 const text = (element: Element | null | undefined) =>
   element?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
@@ -73,7 +97,7 @@ describe('Detail', () => {
       providers: [
         provideRouter([
           {
-            path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:regla/casos/:casoId',
+            path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
             component: Detail,
           },
         ]),
@@ -102,12 +126,31 @@ describe('Detail', () => {
     http.expectOne('/api/Conciliaciones/proyectos').flush(ok(PROYECTOS));
     http.expectOne((req) => req.url === '/api/Conciliaciones/procesos').flush(ok(PROCESOS));
     http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos').flush(ok(SUBPROCESOS));
+    http
+      .expectOne((req) => req.url === '/api/Conciliaciones/subprocesos/reglas')
+      .flush(ok(REGLAS));
   }
 
-  const expectPlantilla = (): TestRequest => http.expectOne(`${RULE_API}/casos/plantilla`);
-  const expectCaso = (id = 'CASO-3452'): TestRequest => http.expectOne(`${RULE_API}/casos/${id}`);
-  const expectHistorial = (id = 'CASO-3452'): TestRequest =>
-    http.expectOne((req) => req.url === `${RULE_API}/casos/${id}/historial`);
+  /** `GET /Conciliaciones/subprocesos-ui/plantilla?reglaId=&tipoBlock=2`. */
+  const expectPlantilla = (): TestRequest =>
+    http.expectOne(
+      (req) =>
+        req.url === '/api/Conciliaciones/subprocesos-ui/plantilla' &&
+        req.params.get('reglaId') === REGLA_ID &&
+        req.params.get('tipoBlock') === '2',
+    );
+  /** `GET /Conciliaciones/fuentes-detalle?conciliacionId=` (lo declara la plantilla). */
+  const expectFuentes = (id = CONCILIACION_ID): TestRequest =>
+    http.expectOne(
+      (req) =>
+        req.url === '/api/Conciliaciones/fuentes-detalle' && req.params.get('conciliacionId') === id,
+    );
+  /** Historial: propuesta, aún no está en el swagger. */
+  const expectHistorial = (id = CONCILIACION_ID): TestRequest =>
+    http.expectOne(
+      (req) =>
+        req.url === '/api/Conciliaciones/historial-cambios' && req.params.get('conciliacionId') === id,
+    );
 
   /** Deja correr efectos y microtareas sin esperar las peticiones que siguen pendientes. */
   async function settle(): Promise<void> {
@@ -123,13 +166,13 @@ describe('Detail', () => {
     harness.detectChanges();
   }
 
-  /** Carga completa: nombres, plantilla, registro del caso e historial. */
-  async function cargar(plantilla: ViewTemplate = PLANTILLA, caso: ViewRecord = CASO): Promise<void> {
+  /** Carga completa: nombres, plantilla, fuentes del caso e historial. */
+  async function cargar(plantilla: ViewTemplate = PLANTILLA, fuentes: FuentesDetalle = FUENTES): Promise<void> {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok(plantilla));
+    expectPlantilla().flush(ok({ plantilla }));
     await settle();
-    expectCaso().flush(ok(caso));
+    expectFuentes().flush(ok(fuentes));
     expectHistorial().flush(ok(HISTORIAL));
     await stable();
   }
@@ -140,9 +183,9 @@ describe('Detail', () => {
     )!;
   const contenido = (titulo: string) =>
     element.querySelector(`#${trigger(titulo).getAttribute('aria-controls')}`)!;
-  const campos = (titulo: string) =>
+  const datos = (titulo: string) =>
     [...contenido(titulo).querySelectorAll('dl > div')].map(
-      (campo) => `${text(campo.querySelector('dt'))}: ${text(campo.querySelector('dd'))}`,
+      (dato) => `${text(dato.querySelector('dt'))}: ${text(dato.querySelector('dd'))}`,
     );
   const filas = () =>
     [...element.querySelectorAll('tbody tr:not([aria-hidden])')].map((fila) =>
@@ -160,15 +203,16 @@ describe('Detail', () => {
     expect(element.querySelector('app-view-block')).toBeNull();
 
     flushNombres();
-    expectPlantilla().flush(ok(PLANTILLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
     await settle();
 
     // Con la plantilla ya se conocen los bloques: cada uno pide sus datos y muestra su skeleton.
     expect(element.querySelector('hlm-accordion-trigger')).toBeNull();
+    expect(element.querySelector('app-view-accordion hlm-skeleton')).not.toBeNull();
     expect(element.querySelectorAll('thead th')).toHaveLength(6);
     expect(element.querySelectorAll('tbody tr[aria-hidden="true"]')).toHaveLength(3);
 
-    expectCaso().flush(ok(CASO));
+    expectFuentes().flush(ok(FUENTES));
     expectHistorial().flush(ok(HISTORIAL));
     await stable();
 
@@ -176,7 +220,7 @@ describe('Detail', () => {
     expect(filas()).toHaveLength(3);
   });
 
-  it('pinta el encabezado fijo de la pantalla con la miga de pan hasta la regla', async () => {
+  it('pinta el encabezado fijo con la miga de pan hasta la regla (nombre del listado de reglas)', async () => {
     await cargar();
 
     expect(text(element.querySelector('h1'))).toBe('Detalle de la diferencia');
@@ -191,28 +235,8 @@ describe('Detail', () => {
     ).toBe(RULE);
   });
 
-  it('pide los datos de cada bloque en la ruta que declara la plantilla', async () => {
-    await navigate();
-    flushNombres();
-    expectPlantilla().flush(ok(PLANTILLA));
-    await settle();
-
-    expectCaso().flush(ok(CASO));
-    const historial = expectHistorial();
-    // Sin paginación y con orden en el cliente no se envían parámetros.
-    expect(historial.request.params.keys()).toEqual([]);
-    historial.flush(ok(HISTORIAL));
-    await stable();
-  });
-
-  it('pinta los acordeones de la plantilla cerrados y en dos columnas, con el título del registro', async () => {
+  it('pinta un acordeón por fuente, cerrados y repartidos en dos columnas', async () => {
     await cargar();
-
-    const titulo = element.querySelector('app-view-accordion h2')!;
-    expect(text(titulo)).toBe('Juan Pablo Rodríguez');
-    expect(element.querySelector('app-view-accordion section')?.getAttribute('aria-labelledby')).toBe(
-      titulo.id,
-    );
 
     const columnas = [...element.querySelectorAll('[data-slot="accordion"] > div')].map((columna) =>
       [...columna.querySelectorAll('hlm-accordion-trigger button')].map(text),
@@ -226,9 +250,17 @@ describe('Detail', () => {
       expect(boton.parentElement?.tagName).toBe('H3');
     }
     expect(contenido('Recargas Pago en Casa').hasAttribute('inert')).toBe(true);
+    // El swagger no trae el nombre del cliente: sin `title` en la plantilla el subtítulo es solo
+    // para lectores de pantalla y mantiene la jerarquía h1 > h2 > h3.
+    const titulo = element.querySelector('app-view-accordion h2')!;
+    expect(titulo.classList).toContain('sr-only');
+    expect(text(titulo)).toBe('Información por aplicativo');
+    expect(element.querySelector('app-view-accordion section')?.getAttribute('aria-labelledby')).toBe(
+      titulo.id,
+    );
   });
 
-  it('abre un acordeón y muestra sus campos con las celdas del catálogo', async () => {
+  it('abre una fuente y muestra sus datos: título por `titleField` y celdas por `tipo`', async () => {
     await cargar();
 
     trigger('Recargas Pago en Casa').click();
@@ -240,7 +272,8 @@ describe('Detail', () => {
     expect(panel.getAttribute('role')).toBe('region');
     expect(panel.getAttribute('aria-labelledby')).toBe(trigger('Recargas Pago en Casa').id);
     expect(text(panel.querySelector('[role="heading"]'))).toBe('Número de guía: 70002333336');
-    expect(campos('Recargas Pago en Casa')).toEqual([
+    // `decimal` → CurrencyCell (cellsByType de la plantilla); "Número de guía" no se repite.
+    expect(datos('Recargas Pago en Casa')).toEqual([
       'Estado: Entregado',
       'Recaudo: $ 6.200.000',
       'Diferencia: $ 3.100.000',
@@ -250,7 +283,7 @@ describe('Detail', () => {
     trigger('Recargas Controller').click();
     await stable();
     expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('true');
-    expect(campos('Recargas Controller')).toEqual([
+    expect(datos('Recargas Controller')).toEqual([
       'Concepto 1: Valor concepto 1',
       'Concepto 2: Valor concepto 2',
       'Concepto 3: Valor concepto 3',
@@ -261,36 +294,50 @@ describe('Detail', () => {
     expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('respeta defaultOpen y el modo single de la plantilla', async () => {
-    const [acordeones, ...resto] = PLANTILLA.blocks;
-    if (acordeones.type !== 'accordion') {
-      throw new Error('El primer bloque del ejemplo debe ser el de acordeones.');
-    }
-    const plantilla: ViewTemplate = {
-      ...PLANTILLA,
-      blocks: [
+  it('sin `cellsByType` usa la celda por defecto de cada tipo', async () => {
+    await cargar(conAcordeon({}, { cellsByType: undefined, titleField: undefined }), {
+      data: [
         {
-          ...acordeones,
-          accordion: {
-            ...acordeones.accordion,
-            type: 'single',
-            items: acordeones.accordion.items.map((item, index) => ({ ...item, defaultOpen: index === 0 })),
-          },
+          nombre: 'Recargas APP',
+          datos: [
+            { nombre: 'Número de guía', tipo: 'string', valor: '70002333336' },
+            { nombre: 'Recaudo', tipo: 'decimal', valor: 6200000.5 },
+            { nombre: 'Intentos', tipo: 'int', valor: 3 },
+            { nombre: 'Fecha', tipo: 'date', valor: '2026-06-26' },
+            { nombre: 'Pagado', tipo: 'boolean', valor: true },
+            { nombre: 'Nota', tipo: 'otro', valor: 'Revisar' },
+          ],
         },
-        ...resto,
       ],
-    };
-    await cargar(plantilla);
+    });
 
-    expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('true');
+    trigger('Recargas APP').click();
+    await stable();
 
+    expect(contenido('Recargas APP').querySelector('[role="heading"]')).toBeNull();
+    expect(datos('Recargas APP')).toEqual([
+      'Número de guía: 70002333336',
+      'Recaudo: 6.200.000,5',
+      'Intentos: 3',
+      'Fecha: 26/06/2026',
+      'Pagado: Sí',
+      'Nota: Revisar',
+    ]);
+  });
+
+  it('respeta el modo single de la plantilla', async () => {
+    await cargar(conAcordeon({}, { type: 'single' }));
+
+    trigger('Recargas Pago en Casa').click();
+    await stable();
     trigger('Recargas Alcarrito').click();
     await stable();
+
     expect(trigger('Recargas Alcarrito').getAttribute('aria-expanded')).toBe('true');
     expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('un aplicativo sin datos muestra el mensaje de la plantilla en lugar de campos vacíos', async () => {
+  it('una fuente sin datos muestra el mensaje de la plantilla', async () => {
     await cargar();
 
     trigger('Recargas Novasoft').click();
@@ -301,17 +348,43 @@ describe('Detail', () => {
     expect(panel.querySelector('dl')).toBeNull();
   });
 
-  it('un campo sin dato dentro de un aplicativo con datos se muestra como "Sin dato"', async () => {
-    await cargar(PLANTILLA, { ...CASO, pagoEnCasa: { numeroGuia: '70002333336', estado: null, recaudo: 0 } });
+  it('un dato sin valor dentro de una fuente con datos se muestra como "Sin dato"', async () => {
+    await cargar(PLANTILLA, {
+      data: [
+        {
+          nombre: 'Recargas Pago en Casa',
+          datos: [
+            { nombre: 'Número de guía', tipo: 'string', valor: '70002333336' },
+            { nombre: 'Estado', tipo: 'string', valor: null },
+            { nombre: 'Recaudo', tipo: 'decimal', valor: 0 },
+          ],
+        },
+      ],
+    });
 
     trigger('Recargas Pago en Casa').click();
     await stable();
 
-    expect(campos('Recargas Pago en Casa')).toEqual([
-      'Estado: —Sin dato',
-      'Recaudo: $ 0',
-      'Diferencia: —Sin dato',
-    ]);
+    expect(datos('Recargas Pago en Casa')).toEqual(['Estado: —Sin dato', 'Recaudo: $ 0']);
+  });
+
+  it('sin fuentes muestra un estado vacío en lugar de los acordeones', async () => {
+    await cargar(PLANTILLA, { data: [] });
+
+    expect(text(element.querySelector('app-view-accordion app-empty-state'))).toBe(
+      'No hay información de los aplicativos para esta diferencia.',
+    );
+    expect(element.querySelector('hlm-accordion-trigger')).toBeNull();
+  });
+
+  it('el título de la sección admite {campo} de la respuesta de las fuentes', async () => {
+    await cargar(conAcordeon({ title: '{nombreCliente}' }), { ...FUENTES, nombreCliente: 'Juan Pablo Rodríguez' });
+
+    const titulo = element.querySelector('app-view-accordion h2')!;
+    expect(text(titulo)).toBe('Juan Pablo Rodríguez');
+    expect(element.querySelector('app-view-accordion section')?.getAttribute('aria-labelledby')).toBe(
+      titulo.id,
+    );
   });
 
   it('pinta la pestaña de la plantilla con su tabla, nombrada por la pestaña', async () => {
@@ -369,10 +442,10 @@ describe('Detail', () => {
   it('muestra el estado vacío de la tabla que define la plantilla', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok(PLANTILLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
     await settle();
-    expectCaso().flush(ok(CASO));
-    expectHistorial().flush(ok({ ...HISTORIAL, pageSize: 0, totalRows: 0, totalPages: 0, rows: [] }));
+    expectFuentes().flush(ok(FUENTES));
+    expectHistorial().flush(ok({ totalCount: 0, totalPages: 0, pageNumber: 1, pageSize: 0, data: [] }));
     await stable();
 
     expect([...element.querySelectorAll('app-empty-state p')].map(text)).toEqual([
@@ -385,9 +458,9 @@ describe('Detail', () => {
   it('si falla un bloque, muestra su error y deja reintentar sin afectar a los demás', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok(PLANTILLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
     await settle();
-    expectCaso().flush('error', { status: 500, statusText: 'Server Error' });
+    expectFuentes().flush('error', { status: 500, statusText: 'Server Error' });
     expectHistorial().flush(ok(HISTORIAL));
     await stable();
 
@@ -397,7 +470,7 @@ describe('Detail', () => {
 
     error.querySelector('button')!.click();
     await settle();
-    expectCaso().flush(ok(CASO));
+    expectFuentes().flush(ok(FUENTES));
     await stable();
 
     expect(element.querySelector('app-error-state')).toBeNull();
@@ -407,7 +480,7 @@ describe('Detail', () => {
   it('si falla la plantilla, muestra el error de la pantalla y deja reintentar', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ ...PLANTILLA, schemaVersion: '2.0.0' }));
+    expectPlantilla().flush(ok({ plantilla: { ...PLANTILLA, schemaVersion: '2.0.0' } }));
     await stable();
 
     expect(text(element.querySelector('app-error-state'))).toContain(
@@ -417,9 +490,9 @@ describe('Detail', () => {
 
     element.querySelector<HTMLButtonElement>('app-error-state button')!.click();
     await settle();
-    expectPlantilla().flush(ok(PLANTILLA));
+    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
     await settle();
-    expectCaso().flush(ok(CASO));
+    expectFuentes().flush(ok(FUENTES));
     expectHistorial().flush(ok(HISTORIAL));
     await stable();
 
@@ -427,20 +500,29 @@ describe('Detail', () => {
     expect(filas()).toHaveLength(3);
   });
 
+  it('si la regla no tiene plantilla de detalle, muestra el error de la pantalla', async () => {
+    await navigate();
+    flushNombres();
+    expectPlantilla().flush(ok({ plantilla: null }));
+    await stable();
+
+    expect(text(element.querySelector('app-error-state'))).toContain(
+      'No pudimos cargar el detalle de esta diferencia.',
+    );
+  });
+
   it('al cambiar de caso reutiliza la plantilla y pide los datos del nuevo caso', async () => {
     await cargar();
 
-    await navigate(`${RULE}/casos/CASO-3453`);
+    await navigate(`${RULE}/casos/otro-caso`);
     await settle();
 
     // La plantilla es por regla: no se vuelve a pedir.
-    expectCaso('CASO-3453').flush(
-      ok({ ...CASO, fuentePrepagoDetalleCliente: { nombreCompleto: 'Diego Alejandro Silva' } }),
-    );
-    expectHistorial('CASO-3453').flush(ok({ ...HISTORIAL, rows: HISTORIAL.rows.slice(0, 1), totalRows: 1 }));
+    expectFuentes('otro-caso').flush(ok({ data: FUENTES.data!.slice(0, 1) }));
+    expectHistorial('otro-caso').flush(ok({ ...HISTORIAL, data: HISTORIAL.data!.slice(0, 1), totalCount: 1 }));
     await stable();
 
-    expect(text(element.querySelector('app-view-accordion h2'))).toBe('Diego Alejandro Silva');
+    expect(element.querySelectorAll('hlm-accordion-trigger')).toHaveLength(1);
     expect(filas()).toHaveLength(1);
   });
 
@@ -472,9 +554,9 @@ describe('Detail', () => {
     try {
       await navigate();
       flushNombres();
-      expectPlantilla().flush(ok(plantilla));
+      expectPlantilla().flush(ok({ plantilla }));
       await settle();
-      expectCaso().flush(ok(CASO));
+      expectFuentes().flush(ok(FUENTES));
       await stable();
 
       expect(element.querySelectorAll('hlm-accordion-trigger')).toHaveLength(6);

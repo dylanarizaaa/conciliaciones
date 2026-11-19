@@ -12,13 +12,13 @@ import { filter, firstValueFrom } from 'rxjs';
 import { API_BASE_URL } from '../../core/config/api-base-url';
 import type { ProcesosResultado } from '../../core/data-access/proceso.model';
 import type { ProyectosResultado } from '../../core/data-access/proyecto.model';
-import type { ReglasPagina, ReglasResultado } from '../../core/data-access/regla.model';
+import type { ReglasPagina } from '../../core/data-access/regla.model';
 import type { SubprocesosResultado } from '../../core/data-access/subproceso.model';
 import type { ApiResponse } from '../../core/http/api-response';
 import { Channel } from './channel';
 
 const BASE = '/plataformas/p1/categorias/c1/canales/s1';
-const REGLAS_URL = '/api/Conciliaciones/subprocesos/reglas/s1';
+const REGLAS_URL = '/api/Conciliaciones/subprocesos/reglas';
 
 function ok<T>(resultado: T): ApiResponse<T> {
   return {
@@ -45,21 +45,20 @@ const SUBPROCESOS: SubprocesosResultado = {
   data: [{ subProcesoId: 's1', nombreSubProceso: 'Pago en Casa', monto: 0, cantidad: 10 }],
 };
 
-function pagina(overrides: Partial<ReglasPagina> = {}): ReglasResultado {
+/** `resultado` de `GET /Conciliaciones/subprocesos/reglas` según el swagger. */
+function pagina(overrides: Partial<ReglasPagina> = {}): ReglasPagina {
   return {
-    data: {
-      casosTotales: 10,
-      montoAfectado: 4800000,
-      pageNumber: 1,
-      pageSize: 10,
-      totalPages: 3,
-      data: [
-        { nombre: 'Cambio de estado logístico', casos: 10, monto: 32000 },
-        { nombre: 'Sin recaudo PEC', casos: 1, monto: 20030 },
-        { nombre: 'Error de estado logístico', casos: 15, monto: 100012 },
-      ],
-      ...overrides,
-    },
+    casosTotales: 10,
+    montoAfectado: 4800000,
+    pageNumber: 1,
+    pageSize: 10,
+    totalPages: 3,
+    data: [
+      { idRegla: 'r-cambio', nombreRegla: 'Cambio de estado logístico', casos: 10, monto: 32000 },
+      { idRegla: 'r-sin-recaudo', nombreRegla: 'Sin recaudo PEC', casos: 1, monto: 20030 },
+      { idRegla: 'r-error', nombreRegla: 'Error de estado logístico', casos: 15, monto: 100012 },
+    ],
+    ...overrides,
   };
 }
 
@@ -108,6 +107,7 @@ describe('Channel', () => {
     return http.expectOne(
       (req) =>
         req.url === REGLAS_URL &&
+        req.params.get('subProcesoId') === 's1' &&
         req.params.get('pageNumber') === String(page) &&
         req.params.get('pageSize') === '10',
     );
@@ -167,9 +167,8 @@ describe('Channel', () => {
 
     const gestionar = element.querySelector<HTMLAnchorElement>('tbody tr a')!;
     expect(text(gestionar)).toBe('Gestionar Cambio de estado logístico');
-    expect(gestionar.getAttribute('href')).toBe(
-      `${BASE}/reglas/Cambio%20de%20estado%20log%C3%ADstico`,
-    );
+    // La regla se identifica por `idRegla`; el nombre solo se muestra.
+    expect(gestionar.getAttribute('href')).toBe(`${BASE}/reglas/r-cambio`);
   });
 
   it('ordena las filas desde el encabezado y lo anuncia con aria-sort', async () => {
@@ -226,7 +225,7 @@ describe('Channel', () => {
     expect(element.querySelectorAll('tbody tr[aria-hidden="true"]').length).toBe(3);
 
     expectReglas(2).flush(
-      ok(pagina({ pageNumber: 2, data: [{ nombre: 'Solicitud incompleta', casos: 12, monto: 20030 }] })),
+      ok(pagina({ pageNumber: 2, data: [{ idRegla: 'r-incompleta', nombreRegla: 'Solicitud incompleta', casos: 12, monto: 20030 }] })),
     );
     await stable();
     expect(rowNames()).toEqual(['Solicitud incompleta']);

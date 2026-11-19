@@ -10,7 +10,9 @@ import {
   leafColumnsOf,
   parseSorting,
   resolveApiPath,
+  resolveQuery,
   serializeSorting,
+  toTablePage,
 } from './vista.utils';
 
 const row = {
@@ -51,6 +53,50 @@ describe('vista.utils', () => {
         regla: 'Cambio de estado logístico',
       }),
     ).toBe('/subprocesos/s1/reglas/Cambio%20de%20estado%20log%C3%ADstico/casos');
+  });
+
+  it('resuelve los parámetros de consulta de una fuente', () => {
+    expect(
+      resolveQuery({ reglaId: '{reglaId}', origen: 'detalle', clave: '{subProcesoId}-{reglaId}' }, {
+        reglaId: 'r 1',
+        subProcesoId: 's1',
+      }),
+    ).toEqual({ reglaId: 'r 1', origen: 'detalle', clave: 's1-r 1' });
+    expect(resolveQuery(undefined, {})).toEqual({});
+    expect(() => resolveQuery({ x: '{otro}' }, {})).toThrow(ApiError);
+  });
+
+  it('normaliza la página del swagger (data, totalCount, casosTotales) y la del contrato', () => {
+    expect(
+      toTablePage({
+        casosTotales: 10,
+        montoAfectado: 500,
+        totalCount: 10,
+        totalPages: 1,
+        pageNumber: 1,
+        pageSize: 10,
+        data: [{ id: 1 }],
+      }),
+    ).toEqual({
+      pageNumber: 1,
+      pageSize: 10,
+      totalRows: 10,
+      totalPages: 1,
+      summary: { casosTotales: 10, montoAfectado: 500 },
+      rows: [{ id: 1 }],
+    });
+    expect(
+      toTablePage({ pageNumber: 2, pageSize: 5, totalRows: 6, totalPages: 2, rows: [{ id: 2 }] }),
+    ).toEqual({ pageNumber: 2, pageSize: 5, totalRows: 6, totalPages: 2, rows: [{ id: 2 }] });
+    // Sin paginación ni totales: una sola página con lo que llegó.
+    expect(toTablePage({ data: [{ id: 1 }, { id: 2 }] })).toEqual({
+      pageNumber: 1,
+      pageSize: 2,
+      totalRows: 2,
+      totalPages: 1,
+      rows: [{ id: 1 }, { id: 2 }],
+    });
+    expect(toTablePage(null)).toEqual({ pageNumber: 1, pageSize: 0, totalRows: 0, totalPages: 0, rows: [] });
   });
 
   it('rechaza rutas con parámetros desconocidos', () => {

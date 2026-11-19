@@ -4,7 +4,10 @@ import {
   type ColumnSortDefinition,
   isGroupColumn,
   type LeafColumnDefinition,
+  type QueryParams,
+  type RegistrosPagina,
   type TableBlock,
+  type TablePage,
   type TableRow,
   type ViewBlock,
   type ViewTemplate,
@@ -47,6 +50,53 @@ export function resolveApiPath(path: string, params: Readonly<Record<string, str
     }
     return encodeURIComponent(value);
   });
+}
+
+/**
+ * Resuelve los parámetros de consulta de una fuente (`{ "reglaId": "{reglaId}" }`) con los
+ * parámetros de la ruta del front. El `HttpClient` los codifica al armar la URL.
+ */
+export function resolveQuery(
+  query: QueryParams | undefined,
+  params: Readonly<Record<string, string>>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(query ?? {}).map(([name, value]) => [
+      name,
+      value.replace(PLACEHOLDER, (_, param: string) => {
+        const resolved = params[param.trim()];
+        if (resolved === undefined) {
+          throw new ApiError(`La plantilla usa el parámetro desconocido "{${param}}".`, 0, []);
+        }
+        return resolved;
+      }),
+    ]),
+  );
+}
+
+/**
+ * Página de una tabla a partir de la respuesta del back. Acepta la forma del swagger
+ * (`data`, `totalCount`, `casosTotales`, `montoAfectado`) y la del contrato (`rows`, `totalRows`,
+ * `summary`).
+ */
+export function toTablePage(resultado: unknown): TablePage {
+  const page = (resultado ?? {}) as Partial<TablePage> & RegistrosPagina;
+  const rows = page.rows ?? page.data ?? [];
+  const summary =
+    page.summary ??
+    (typeof page.casosTotales === 'number'
+      ? { casosTotales: page.casosTotales, montoAfectado: page.montoAfectado ?? 0 }
+      : undefined);
+  return {
+    pageNumber: page.pageNumber ?? 1,
+    pageSize: page.pageSize ?? rows.length,
+    totalRows: page.totalRows ?? page.totalCount ?? rows.length,
+    totalPages: page.totalPages ?? (rows.length > 0 ? 1 : 0),
+    ...(page.sort ? { sort: page.sort } : {}),
+    ...(page.filters ? { filters: page.filters } : {}),
+    ...(summary ? { summary } : {}),
+    rows,
+  };
 }
 
 /** `[{ id: 'monto', desc: true }]` → `['monto:desc']` (formato del parámetro `sort`). */
