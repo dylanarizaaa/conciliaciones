@@ -18,8 +18,9 @@ export type Emphasis = 'default' | 'lead' | 'highlight';
 // ---------------------------------------------------------------------------------------------
 
 export interface ViewTemplate {
-  readonly schemaVersion: string;
-  readonly id: string;
+  /** Versión del contrato (`1.x`). Si falta, se asume la 1. */
+  readonly schemaVersion?: string;
+  readonly id?: string;
   /** Cambia cuando el back modifica la plantilla (sirve para invalidar la caché). */
   readonly revision?: string;
   readonly title?: string;
@@ -60,17 +61,55 @@ export interface RecordSource {
 }
 
 /**
- * Acordeones (v1.1): uno por cada fuente (aplicativo) que devuelve `dataSource`, con la forma de
- * `GET /Conciliaciones/fuentes-detalle` (`FuentesDetalle`). La plantilla solo decide cómo se
- * presentan; las fuentes, sus datos y su orden vienen de la respuesta.
+ * Acordeones (v1.1). Los datos salen siempre de `GET /Conciliaciones/fuentes-detalle` (fuente fija
+ * del front): cada fuente (`nombre`) tiene sus datos (`nombre`, `tipo`, `valor`).
+ *
+ * - Con `accordion.items`, hay un acordeón por elemento: su `id` es el `nombre` de la fuente y cada
+ *   columna lee el dato cuyo `nombre` es su `accessorKey`.
+ * - Sin `items`, hay un acordeón por fuente, con todos sus datos.
  */
 export interface AccordionBlock {
   readonly id: string;
   readonly type: 'accordion';
   /** Título de la sección; admite plantillas `{campo}` de la respuesta (fuera de `data`). */
   readonly title?: string;
-  readonly dataSource: RecordSource;
+  /** Se ignora: la fuente de los acordeones es fija del front. */
+  readonly dataSource?: RecordSource;
   readonly accordion: AccordionDefinition;
+}
+
+export interface AccordionItemDefinition {
+  /** `nombre` de la fuente en `fuentes-detalle` (p. ej. `fuentePrepagoMovimiento`). */
+  readonly id: string;
+  /**
+   * Texto del acordeón. Si falta o es igual al `id`, el front usa el nombre que tiene asociado a
+   * esa fuente (`tituloFuente`).
+   */
+  readonly title?: string;
+  readonly defaultOpen?: boolean;
+  readonly content: FieldListDefinition;
+}
+
+/** Contenido de un acordeón: título opcional y una columna por cada dato (encabezado / valor). */
+export interface FieldListDefinition {
+  /** Admite `{campo}` con los datos de la fuente: "Número de guía: {numeroGuia}". */
+  readonly title?: string;
+  /** Mensaje cuando ninguna columna trae dato (o la fuente no llegó). */
+  readonly emptyState?: EmptyStateDefinition;
+  readonly columns: readonly FieldColumnDefinition[];
+}
+
+/**
+ * Columna de un acordeón: el mismo vocabulario que la columna hoja de una tabla (`id`, `header`,
+ * `accessorKey`, `cell`), con encabezado de texto y solo celdas que muestran un valor.
+ */
+export interface FieldColumnDefinition {
+  readonly id: string;
+  readonly header: string;
+  /** `nombre` del dato en la fuente. */
+  readonly accessorKey: string;
+  /** Si falta, la celda sale del `tipo` del dato (`cellsByType` o la celda por defecto). */
+  readonly cell?: ValueCellRef;
 }
 
 export interface AccordionDefinition {
@@ -78,9 +117,11 @@ export interface AccordionDefinition {
   readonly type?: 'single' | 'multiple';
   /** En pantallas anchas los acordeones se reparten, en orden, en 1 o 2 columnas de la pantalla. */
   readonly layoutColumns?: 1 | 2;
+  /** Acordeones y columnas; sin `items`, un acordeón por fuente con todos sus datos. */
+  readonly items?: readonly AccordionItemDefinition[];
   /**
-   * `nombre` del dato que va como título de la tarjeta ("Número de guía" → "Número de guía:
-   * 70002333336"). Ese dato no se repite en la lista.
+   * Sin `items`: `nombre` del dato que va como título de la tarjeta ("Número de guía" →
+   * "Número de guía: 70002333336"). Ese dato no se repite en la lista.
    */
   readonly titleField?: string;
   /**
@@ -146,8 +187,11 @@ export interface ColumnSortDefinition {
 }
 
 export interface DataSource {
-  /** Ruta relativa al API base con llaves `{param}` (parámetros de la ruta del front). */
-  readonly path: string;
+  /**
+   * Ruta relativa al API base con llaves `{param}`. La tabla de la pantalla Regla no la necesita:
+   * su fuente es fija del front (`/Conciliaciones/subprocesos-registros/reglas`).
+   */
+  readonly path?: string;
   readonly query?: QueryParams;
   readonly pagination?: {
     readonly mode?: 'server' | 'none';

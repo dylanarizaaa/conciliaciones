@@ -5,8 +5,6 @@
   "description": "Contrato de la plantilla que devuelve GET /Conciliaciones/subprocesos-ui/plantilla?reglaId=&tipoBlock= dentro de resultado.plantilla (como objeto o como texto JSON). Describe qué bloques pinta la vista (tablas con TanStack Table v9, acordeones y pestañas) y de dónde sale cada dato.",
   "type": "object",
   "required": [
-    "schemaVersion",
-    "id",
     "layout",
     "blocks"
   ],
@@ -14,7 +12,8 @@
   "properties": {
     "schemaVersion": {
       "type": "string",
-      "pattern": "^1\\.\\d+\\.\\d+$"
+      "pattern": "^1\\.\\d+\\.\\d+$",
+      "description": "Versión del contrato (1.x). Si falta, el front asume la 1."
     },
     "id": {
       "$ref": "#/$defs/identifier"
@@ -38,8 +37,9 @@
   },
   "$defs": {
     "identifier": {
+      "description": "Identificador: letras, números, guiones y guion bajo (admite UUID).",
       "type": "string",
-      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*$"
     },
     "fieldPath": {
       "type": "string",
@@ -159,12 +159,11 @@
       }
     },
     "accordionBlock": {
-      "description": "Acordeones (v1.1): uno por cada fuente que devuelve dataSource (forma de fuentes-detalle), con sus datos. La plantilla solo decide la presentación.",
+      "description": "Acordeones (v1.1). Los datos salen siempre de GET /Conciliaciones/fuentes-detalle (fuente fija del front; dataSource se ignora). Con accordion.items hay un acordeón por elemento (id = nombre de la fuente); sin items, uno por fuente con todos sus datos.",
       "type": "object",
       "required": [
         "id",
         "type",
-        "dataSource",
         "accordion"
       ],
       "additionalProperties": false,
@@ -180,6 +179,7 @@
           "type": "string"
         },
         "dataSource": {
+          "description": "Se ignora: la fuente de los acordeones es fija del front.",
           "$ref": "#/$defs/recordSource"
         },
         "accordion": {
@@ -203,12 +203,12 @@
               "default": 1
             },
             "titleField": {
-              "description": "nombre del dato que va como título de la tarjeta (\"Número de guía\" → \"Número de guía: 70002333336\"). Ese dato no se repite en la lista.",
+              "description": "Solo sin items: nombre del dato que va como título de la tarjeta (\"Número de guía\" → \"Número de guía: 70002333336\").",
               "type": "string",
               "minLength": 1
             },
             "cellsByType": {
-              "description": "Celda para cada valor de datos[].tipo. Un tipo que no está aquí usa la celda por defecto del front (texto si no lo reconoce).",
+              "description": "Celda para cada valor de datos[].tipo cuando la columna no trae cell. Un tipo que no está aquí usa la celda por defecto del front (texto si no lo reconoce).",
               "type": "object",
               "additionalProperties": {
                 "$ref": "#/$defs/valueCell"
@@ -216,6 +216,13 @@
             },
             "emptyState": {
               "$ref": "#/$defs/emptyState"
+            },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/accordionItem"
+              }
             }
           }
         }
@@ -330,7 +337,6 @@
       "required": [
         "id",
         "type",
-        "dataSource",
         "table"
       ],
       "additionalProperties": false,
@@ -354,9 +360,7 @@
     },
     "dataSource": {
       "type": "object",
-      "required": [
-        "path"
-      ],
+      "required": [],
       "additionalProperties": false,
       "properties": {
         "path": {
@@ -443,7 +447,8 @@
             }
           }
         }
-      }
+      },
+      "description": "Fuente de una tabla. En la pantalla Regla la fuente es fija del front (/Conciliaciones/subprocesos-registros/reglas): la plantilla solo aporta pagination y sorting, y path se ignora."
     },
     "table": {
       "type": "object",
@@ -1222,6 +1227,81 @@
       },
       "additionalProperties": {
         "type": "string"
+      }
+    },
+    "accordionItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "nombre de la fuente en fuentes-detalle (p. ej. fuentePrepagoMovimiento).",
+          "$ref": "#/$defs/identifier"
+        },
+        "title": {
+          "description": "Texto del acordeón. Si falta o es igual al id, el front usa el nombre que tiene asociado a la fuente.",
+          "type": "string"
+        },
+        "defaultOpen": {
+          "type": "boolean",
+          "default": false
+        },
+        "content": {
+          "$ref": "#/$defs/fieldList"
+        }
+      }
+    },
+    "fieldList": {
+      "description": "Contenido de un acordeón: una columna por dato (encabezado / valor). Si ninguna trae dato, o la fuente no llega, se muestra emptyState.",
+      "type": "object",
+      "required": [
+        "columns"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "description": "Admite {campo} con los datos de la fuente: \"Número de guía: {numeroGuia}\". Si falta alguno, no se muestra.",
+          "type": "string"
+        },
+        "emptyState": {
+          "$ref": "#/$defs/emptyState"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/fieldColumn"
+          }
+        }
+      }
+    },
+    "fieldColumn": {
+      "description": "Mismo vocabulario que la columna hoja de una tabla (id, accessorKey, header, cell). accessorKey es el nombre del dato en la fuente (sin distinguir mayúsculas). Sin cell, la celda sale del tipo del dato.",
+      "type": "object",
+      "required": [
+        "id",
+        "header",
+        "accessorKey"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "accessorKey": {
+          "type": "string",
+          "minLength": 1
+        },
+        "header": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cell": {
+          "$ref": "#/$defs/valueCell"
+        }
       }
     }
   }

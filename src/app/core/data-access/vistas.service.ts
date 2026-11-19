@@ -25,6 +25,23 @@ export const TIPO_BLOCK = {
 
 export type TipoBlock = (typeof TIPO_BLOCK)[keyof typeof TIPO_BLOCK];
 
+/**
+ * Fuentes de datos fijas de las pantallas (endpoints del swagger). La plantilla no las declara:
+ * solo dice cómo se presentan los datos.
+ */
+export const FUENTES = {
+  /** Casos de la tabla de la pantalla Regla. */
+  casosRegla: {
+    path: '/Conciliaciones/subprocesos-registros/reglas',
+    query: { reglaId: '{reglaId}' },
+  },
+  /** Fuentes (aplicativos) de los acordeones de la pantalla Detalle. */
+  fuentesDetalle: {
+    path: '/Conciliaciones/fuentes-detalle',
+    query: { conciliacionId: '{conciliacionId}' },
+  },
+} as const;
+
 /** `resultado` de la plantilla (`GetParametrizacionPlantillaResponse`). */
 interface PlantillaResultado {
   /** La plantilla del contrato; el back puede guardarla como objeto o como texto JSON. */

@@ -1,0 +1,319 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "layout": {
+      "type": "stack",
+      "items": [
+        {
+          "blockId": "94fabfd3-56a5-49bd-a17d-aa9d9570329d"
+        }
+      ]
+    },
+    "blocks": [
+      {
+        "id": "94fabfd3-56a5-49bd-a17d-aa9d9570329d",
+        "type": "table",
+        "dataSource": {
+          "pagination": {
+            "mode": "server",
+            "defaultPageSize": 10
+          },
+          "sorting": {
+            "mode": "client",
+            "multi": false
+          }
+        },
+        "table": {
+          "rowId": "conciliacionId",
+          "emptyState": {
+            "title": "No hay diferencias por resolver en esta regla.",
+            "description": "Cuando se detecten diferencias aparecerán aquí."
+          },
+          "columns": [
+            {
+              "id": "seleccion",
+              "header": {
+                "component": "SelectAllCheckbox",
+                "inputs": {
+                  "ariaLabel": "Seleccionar todas las diferencias de la página"
+                }
+              },
+              "cell": {
+                "component": "RowCheckbox",
+                "inputs": {
+                  "ariaLabel": "Seleccionar la diferencia de {conciliacionId}"
+                }
+              },
+              "meta": {
+                "width": 56
+              },
+              "pin": "start",
+              "enableHiding": false
+            },
+            {
+              "id": "primerNombre",
+              "accessorKey": "primerNombre",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Primer Nombre"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "emphasis": "lead",
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 216
+              },
+              "enableSorting": true,
+              "sortType": "text",
+              "pin": "start",
+              "enableHiding": false
+            },
+            {
+              "id": "segundoNombre",
+              "accessorKey": "segundoNombre",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Segundo Nombre"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "primerApellido",
+              "accessorKey": "primerApellido",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Primer Apellido"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "segundoApellido",
+              "accessorKey": "segundoApellido",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Segundo Apellido"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "numeroDocumento",
+              "accessorKey": "numeroDocumento",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Número Documento"
+                }
+              },
+              "cell": {
+                "component": "CurrencyCell",
+                "inputs": {
+                  "currency": "COP",
+                  "maximumFractionDigits": 0
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "basic"
+            },
+            {
+              "id": "numeroBolsillo",
+              "accessorKey": "numeroBolsillo",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Número de Bolsillo"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "numeroGuia",
+              "accessorKey": "numeroGuia",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Número de Guia"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "fechaCreacion",
+              "accessorKey": "fechaCreacion",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Fecha de Creación"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "idMovimiento",
+              "accessorKey": "idMovimiento",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Tipo Movimiento"
+                }
+              },
+              "cell": {
+                "component": "CurrencyCell",
+                "inputs": {
+                  "currency": "COP",
+                  "maximumFractionDigits": 0
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "basic"
+            },
+            {
+              "id": "estado",
+              "accessorKey": "estado",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Estado"
+                }
+              },
+              "cell": {
+                "component": "BadgeCell",
+                "inputs": {
+                  "variants": {
+                    "Fallido": {
+                      "label": "Fallido",
+                      "tone": "danger"
+                    },
+                    "EN_GESTION": {
+                      "label": "En gestión",
+                      "tone": "info"
+                    },
+                    "RESUELTO": {
+                      "label": "Resuelto",
+                      "tone": "success"
+                    }
+                  },
+                  "fallback": {
+                    "label": "Sin estado",
+                    "tone": "neutral"
+                  }
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "text",
+              "pin": "end"
+            },
+            {
+              "id": "accion",
+              "header": "Acción",
+              "cell": {
+                "component": "LinkCell",
+                "inputs": {
+                  "label": "Ver detalle",
+                  "ariaLabel": "Ver detalle de la diferencia de {conciliacionId}",
+                  "route": [
+                    "conciliacionId",
+                    "{conciliacionId}"
+                  ]
+                }
+              },
+              "meta": {
+                "width": 120
+              },
+              "pin": "end",
+              "enableHiding": false
+            }
+          ],
+          "selection": {
+            "mode": "multi",
+            "persistAcrossPages": true
+          }
+        }
+      }
+    ]
+  }
+}

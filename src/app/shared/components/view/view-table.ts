@@ -47,7 +47,12 @@ function applyUpdater<T>(updater: Updater<T>, current: T): T {
     }
     <p class="sr-only" role="status">{{ statusMessage() }}</p>
 
-    @if (datos.error()) {
+    @if (sinFuente()) {
+      <app-empty-state
+        title="Esta tabla no tiene una fuente de datos configurada."
+        description="Revisa dataSource.path en la plantilla."
+      />
+    } @else if (datos.error()) {
       <app-error-state title="No pudimos cargar esta tabla." (retry)="datos.reload()" />
     } @else if (isEmpty()) {
       <app-empty-state
@@ -94,7 +99,12 @@ export class ViewTable {
   );
 
   private readonly definicion = computed(() => buildTemplateTable(this.block().table));
-  private readonly path = computed(() => resolveApiPath(this.block().dataSource.path, this.params()));
+  /** Una tabla fuera de las pantallas conocidas necesita `dataSource.path`. */
+  private readonly path = computed(() => {
+    const path = this.block().dataSource.path;
+    return path ? resolveApiPath(path, this.params()) : '';
+  });
+  protected readonly sinFuente = computed(() => !this.path());
   private readonly query = computed(() => resolveQuery(this.block().dataSource.query, this.params()));
 
   protected readonly paginated = computed(
@@ -130,12 +140,15 @@ export class ViewTable {
   });
 
   protected readonly datos = rxResource({
-    params: () => ({
-      path: this.path(),
-      query: this.query(),
-      ...(this.paginated() ? { pageNumber: this.page(), pageSize: this.pageSize() } : {}),
-      sort: this.serverSorting() ? this.sorting() : [],
-    }),
+    params: () =>
+      this.sinFuente()
+        ? undefined
+        : {
+            path: this.path(),
+            query: this.query(),
+            ...(this.paginated() ? { pageNumber: this.page(), pageSize: this.pageSize() } : {}),
+            sort: this.serverSorting() ? this.sorting() : [],
+          },
     stream: ({ params }) => this.vistas.getPagina(params.path, params),
   });
 

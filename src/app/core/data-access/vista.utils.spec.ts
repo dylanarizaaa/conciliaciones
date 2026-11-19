@@ -122,6 +122,12 @@ describe('vista.utils', () => {
     expect(assertSupportedTemplate(plantilla, 'table')).toBe(plantilla);
   });
 
+  it('sin `schemaVersion` asume la versión 1 (así responde hoy el back)', () => {
+    const { schemaVersion: _, id: __, ...sinVersion } = template();
+    expect(assertSupportedTemplate(sinVersion as ViewTemplate)).toBe(sinVersion);
+    expect(() => assertSupportedTemplate(null as unknown as ViewTemplate)).toThrow(ApiError);
+  });
+
   it('rechaza versiones mayores desconocidas o plantillas sin bloques', () => {
     expect(() => assertSupportedTemplate(template({ schemaVersion: '2.0.0' }))).toThrow(
       'La plantilla usa la versión 2.0.0 del contrato.',

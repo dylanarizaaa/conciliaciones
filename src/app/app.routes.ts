@@ -32,6 +32,13 @@ export const routes: Routes = [
     title: 'Detalle | Conciliaciones',
     loadComponent: () => import('./features/rule/detail/detail').then((m) => m.Detail),
   },
+  {
+    // La plantilla del back arma "Ver detalle" como ["conciliacionId", "{conciliacionId}"]: se lleva
+    // a la ruta del detalle hasta que use ["casos", "{conciliacionId}"].
+    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/conciliacionId/:conciliacionId',
+    redirectTo:
+      'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
+  },
 ];
 
 // El orquestador consume este módulo expuesto con `.then((m) => m.default)`.

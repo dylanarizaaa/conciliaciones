@@ -21,6 +21,7 @@ import type {
 import type { ApiResponse } from '../../core/http/api-response';
 import { formatDateTime } from '../../core/format/formatters';
 import cambioEstadoEjemplo from '../../../../docs/contrato-vista/ejemplos/cambio-estado.response.json';
+import plantillaBack from '../../../../docs/contrato-vista/ejemplos/back/plantilla-regla.response.json';
 import plantillaEjemplo from '../../../../docs/contrato-vista/ejemplos/plantilla.response.json';
 import registrosEjemplo from '../../../../docs/contrato-vista/ejemplos/registros.response.json';
 import reporteEjemplo from '../../../../docs/contrato-vista/ejemplos/reporte.response.json';
@@ -32,8 +33,9 @@ import type {
 import { Rule } from './rule';
 
 /** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`, forma del swagger). */
-const PLANTILLA_REGLA = (plantillaEjemplo as unknown as ApiResponse<{ plantilla: ViewTemplate }>).resultado
-  .plantilla;
+const PLANTILLA_REGLA = (plantillaEjemplo as unknown as ApiResponse<ViewTemplate>).resultado;
+/** Plantilla tal como la devuelve hoy el back (`docs/contrato-vista/ejemplos/back`). */
+const PLANTILLA_BACK = (plantillaBack as unknown as ApiResponse<ViewTemplate>).resultado;
 const DATOS_REGLA = (registrosEjemplo as unknown as ApiResponse<RegistrosPagina>).resultado;
 const FILAS = DATOS_REGLA.data as TableRow[];
 const RESOLUCION = (cambioEstadoEjemplo as unknown as ApiResponse<ResolucionDiferencias>).resultado;
@@ -184,7 +186,7 @@ describe('Rule', () => {
   async function cargar(datos: RegistrosPagina = pagina()): Promise<void> {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA_REGLA }));
+    expectPlantilla().flush(ok(PLANTILLA_REGLA));
     await settle();
     expectDatos().flush(ok(datos));
     await stable();
@@ -213,7 +215,7 @@ describe('Rule', () => {
     expect(element.querySelector('app-data-table')).toBeNull();
 
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA_REGLA }));
+    expectPlantilla().flush(ok(PLANTILLA_REGLA));
     await settle();
 
     // Con la plantilla ya se conocen las columnas: encabezados reales y filas skeleton.
@@ -393,7 +395,7 @@ describe('Rule', () => {
     try {
       await navigate();
       flushNombres();
-      expectPlantilla().flush(ok({ plantilla: sinSeleccion }));
+      expectPlantilla().flush(ok(sinSeleccion));
       await settle();
       expectDatos().flush(ok(pagina()));
       await stable();
@@ -523,7 +525,8 @@ describe('Rule', () => {
     } finally {
       click.mockRestore();
       delete (window.URL as { createObjectURL?: unknown }).createObjectURL;
-      delete (window.URL as { revokeObjectURL?: unknown }).revokeObjectURL;
+      // La URL se libera 1 s después de la descarga: queda un stub para ese temporizador.
+      Object.defineProperty(window.URL, 'revokeObjectURL', { configurable: true, value: () => undefined });
     }
   });
 
@@ -552,7 +555,7 @@ describe('Rule', () => {
   it('muestra un error si la plantilla es de una versión no soportada y permite reintentar', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: { ...PLANTILLA_REGLA, schemaVersion: '2.0.0' } satisfies ViewTemplate }));
+    expectPlantilla().flush(ok({ ...PLANTILLA_REGLA, schemaVersion: '2.0.0' } satisfies ViewTemplate));
     await stable();
 
     const error = element.querySelector('app-error-state');
@@ -560,7 +563,7 @@ describe('Rule', () => {
 
     button('Reintentar').click();
     await settle();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA_REGLA }));
+    expectPlantilla().flush(ok(PLANTILLA_REGLA));
     await settle();
     expectDatos().flush(ok(pagina()));
     await stable();
@@ -568,15 +571,62 @@ describe('Rule', () => {
     expect(element.querySelectorAll('tbody tr')).toHaveLength(10);
   });
 
-  it('acepta la plantilla guardada como texto JSON', async () => {
+  it.each([
+    ['dentro de `plantilla` (forma del swagger)', { plantilla: PLANTILLA_REGLA }],
+    ['como texto JSON', { plantilla: JSON.stringify(PLANTILLA_REGLA) }],
+  ])('acepta la plantilla %s', async (_, resultado) => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: JSON.stringify(PLANTILLA_REGLA) }));
+    expectPlantilla().flush(ok(resultado));
     await settle();
     expectDatos().flush(ok(pagina()));
     await stable();
 
     expect(element.querySelectorAll('tbody tr')).toHaveLength(10);
+  });
+
+  it('pinta la plantilla real del back: sin versión ni ruta de datos, con el título del diseño', async () => {
+    await navigate();
+    flushNombres();
+    expectPlantilla().flush(ok(PLANTILLA_BACK));
+    await settle();
+    // La fuente de la tabla es fija del front aunque la plantilla no la declare.
+    expectDatos().flush(
+      ok(
+        pagina({
+          data: [
+            {
+              conciliacionId: 'u-1',
+              primerNombre: 'Juan',
+              segundoNombre: 'Pablo',
+              primerApellido: 'Rodríguez',
+              segundoApellido: null,
+              numeroDocumento: 1045678902,
+              numeroBolsillo: '321-765-4322',
+              numeroGuia: '70002333336',
+              fechaCreacion: '2026-11-11T10:00:00',
+              idMovimiento: 3452,
+              estado: 'Fallido',
+            },
+          ],
+          totalCount: 1,
+        }),
+      ),
+    );
+    await stable();
+
+    expect(element.querySelector('app-error-state')).toBeNull();
+    // El bloque no trae `title`: el front usa el del diseño.
+    expect(text(element.querySelector('h2'))).toBe('Diferencias por resolver');
+    expect([...element.querySelectorAll('thead th')].map(text).slice(1, 3)).toEqual([
+      'Primer Nombre',
+      'Segundo Nombre',
+    ]);
+    const fila = [...element.querySelectorAll('tbody tr')[0].querySelectorAll('td')].map(text);
+    expect(fila[1]).toBe('Juan');
+    expect(fila[10]).toBe('Fallido');
+    expect(element.querySelector('tbody a')?.getAttribute('href')).toBe(`${BASE}/conciliacionId/u-1`);
+    expect(element.querySelector('button[aria-label="Seleccionar la diferencia de u-1"]')).not.toBeNull();
   });
 
   it('usa "Validado por" y la fecha del back si los envía', async () => {

@@ -2,13 +2,28 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { rxResource } from '@angular/core/rxjs-interop';
 import { HlmAccordionImports } from '@spartan-ng/helm/accordion';
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton';
-import type { AccordionBlock, FuenteDetalle } from '../../../core/data-access/vista.model';
-import { interpolateRow, resolveApiPath, resolveQuery } from '../../../core/data-access/vista.utils';
-import { VistasService } from '../../../core/data-access/vistas.service';
+import { tituloFuente } from '../../../core/data-access/fuentes';
+import type {
+  AccordionBlock,
+  AccordionDefinition,
+  AccordionItemDefinition,
+  EmptyStateDefinition,
+  FuenteDetalle,
+  ValueCellRef,
+  ViewRecord,
+} from '../../../core/data-access/vista.model';
+import {
+  interpolateRow,
+  isEmptyValue,
+  resolveApiPath,
+  resolveQuery,
+} from '../../../core/data-access/vista.utils';
+import { FUENTES, VistasService } from '../../../core/data-access/vistas.service';
+import { cellForType, valueCellResolver } from '../data-table/cells/value-cell';
 import { resourceValue } from '../../../core/resource/resource-value';
 import { EmptyState } from '../empty-state/empty-state';
 import { ErrorState } from '../error-state/error-state';
-import { FieldList } from '../field-list/field-list';
+import { FieldList, type FieldListRow } from '../field-list/field-list';
 import { SectionTitle } from '../section-title/section-title';
 
 /** Acordeones de relleno mientras llegan las fuentes. */
@@ -19,7 +34,123 @@ let nextId = 0;
 interface AccordionItem {
   readonly key: string;
   readonly title: string;
-  readonly fuente: FuenteDetalle;
+  readonly defaultOpen: boolean;
+  /** Título de la tarjeta; vacío si no hay o si le falta algún dato. */
+  readonly cardTitle: string;
+  readonly rows: readonly FieldListRow[];
+  readonly empty: boolean;
+  readonly emptyState?: EmptyStateDefinition;
+}
+
+/** Datos de una fuente con búsqueda por `nombre` sin distinguir mayúsculas. */
+class DatosFuente {
+  private readonly porNombre = new Map<string, { valor: unknown; tipo: string | null }>();
+
+  constructor(fuente: FuenteDetalle | undefined) {
+    for (const dato of fuente?.datos ?? []) {
+      if (dato?.nombre) {
+        this.porNombre.set(normalize(dato.nombre), { valor: dato.valor, tipo: dato.tipo });
+      }
+    }
+  }
+
+  valor(nombre: string): unknown {
+    return this.porNombre.get(normalize(nombre))?.valor;
+  }
+
+  tipo(nombre: string): string | null {
+    return this.porNombre.get(normalize(nombre))?.tipo ?? null;
+  }
+
+  /** Para las celdas que leen otros campos (p. ej. `currencyField`). */
+  get record(): ViewRecord {
+    return new Proxy({}, { get: (_, key) => (typeof key === 'string' ? this.valor(key) : undefined) });
+  }
+}
+
+const normalize = (value: string) => value.trim().toLowerCase();
+const PLACEHOLDER = /\{([^{}]+)\}/g;
+
+/** Nombres de los datos que usa un título: "Guía {numeroGuia}" → {"numeroguia"}. */
+function placeholders(template: string | undefined): Set<string> {
+  return new Set([...(template ?? '').matchAll(PLACEHOLDER)].map(([, nombre]) => normalize(nombre)));
+}
+
+/** "Número de guía: {numeroGuia}" con los datos de la fuente; vacío si falta algún dato. */
+function cardTitle(template: string | undefined, datos: DatosFuente): string {
+  if (!template) {
+    return '';
+  }
+  let completo = true;
+  const title = template.replace(PLACEHOLDER, (_, nombre: string) => {
+    const valor = datos.valor(nombre);
+    if (isEmptyValue(valor)) {
+      completo = false;
+      return '';
+    }
+    return String(valor);
+  });
+  return completo ? title.trim() : '';
+}
+
+function row(
+  header: string,
+  nombre: string,
+  cell: ValueCellRef | undefined,
+  datos: DatosFuente,
+  config: AccordionDefinition,
+): FieldListRow & { readonly value: unknown } {
+  const value = datos.valor(nombre);
+  const resolve = valueCellResolver(cell ?? cellForType(datos.tipo(nombre), config.cellsByType), { wrap: true });
+  return { header, value, view: resolve(value, datos.record) };
+}
+
+/** Acordeón definido en la plantilla: su `id` es el `nombre` de la fuente. */
+function fromTemplate(
+  item: AccordionItemDefinition,
+  index: number,
+  fuentes: ReadonlyMap<string, FuenteDetalle>,
+  config: AccordionDefinition,
+): AccordionItem {
+  const fuente = fuentes.get(normalize(item.id));
+  const datos = new DatosFuente(fuente);
+  const rows = item.content.columns.map((column) => ({
+    ...row(column.header, column.accessorKey, column.cell, datos, config),
+    accessorKey: normalize(column.accessorKey),
+  }));
+  const title = cardTitle(item.content.title, datos);
+  // Un dato que ya está en el título de la tarjeta no se repite en la lista (diseño).
+  const enTitulo = title ? placeholders(item.content.title) : new Set<string>();
+  return {
+    key: `${index}-${item.id}`,
+    title: tituloFuente(item.id, item.title),
+    defaultOpen: item.defaultOpen ?? false,
+    cardTitle: title,
+    rows: rows.filter(({ accessorKey }) => !enTitulo.has(accessorKey)),
+    empty: !fuente || rows.every(({ value }) => isEmptyValue(value)),
+    emptyState: item.content.emptyState ?? config.emptyState,
+  };
+}
+
+/** Sin `items` en la plantilla: un acordeón por fuente con todos sus datos. */
+function fromData(fuente: FuenteDetalle, index: number, config: AccordionDefinition): AccordionItem {
+  const datos = new DatosFuente(fuente);
+  const titleField = config.titleField ? normalize(config.titleField) : '';
+  const todos = (fuente.datos ?? []).filter((dato) => !!dato?.nombre);
+  const titulo = todos.find((dato) => normalize(dato.nombre!) === titleField);
+  const rows = todos
+    .filter((dato) => dato !== titulo)
+    .map((dato) => row(dato.nombre!, dato.nombre!, undefined, datos, config));
+  const nombre = fuente.nombre?.trim() || `Aplicativo ${index + 1}`;
+  return {
+    key: `${index}-${nombre}`,
+    title: tituloFuente(nombre),
+    defaultOpen: false,
+    cardTitle: titulo && !isEmptyValue(titulo.valor) ? `${titulo.nombre}: ${titulo.valor}` : '',
+    rows,
+    empty: todos.every((dato) => isEmptyValue(dato.valor)),
+    emptyState: config.emptyState,
+  };
 }
 
 /**
@@ -54,10 +185,15 @@ interface AccordionItem {
               @for (column of layoutColumns(); track $index) {
                 <div class="flex min-w-0 flex-1 flex-col gap-8">
                   @for (item of column; track item.key) {
-                    <div hlmAccordionItem>
+                    <div hlmAccordionItem [isOpened]="item.defaultOpen">
                       <hlm-accordion-trigger>{{ item.title }}</hlm-accordion-trigger>
                       <hlm-accordion-content>
-                        <app-field-list [fuente]="item.fuente" [definition]="block().accordion" />
+                        <app-field-list
+                          [title]="item.cardTitle"
+                          [rows]="item.rows"
+                          [empty]="item.empty"
+                          [emptyState]="item.emptyState"
+                        />
                       </hlm-accordion-content>
                     </div>
                   }
@@ -100,24 +236,29 @@ export class ViewAccordion {
   protected readonly titleId = `app-view-accordion-title-${nextId++}`;
   protected readonly fallbackTitle = 'Información por aplicativo';
 
+  /** La fuente es fija (`fuentes-detalle`); el `dataSource` de la plantilla se ignora. */
   protected readonly fuentes = rxResource({
-    params: () => {
-      const { path, query } = this.block().dataSource;
-      return { path: resolveApiPath(path, this.params()), query: resolveQuery(query, this.params()) };
-    },
+    params: () => ({
+      path: resolveApiPath(FUENTES.fuentesDetalle.path, this.params()),
+      query: resolveQuery(FUENTES.fuentesDetalle.query, this.params()),
+    }),
     stream: ({ params }) => this.vistas.getFuentes(params.path, params.query),
   });
 
-  /** Un acordeón por fuente, en el orden en que llegan. */
-  protected readonly items = computed<AccordionItem[]>(() =>
-    (resourceValue(this.fuentes)?.data ?? [])
-      .filter((fuente): fuente is FuenteDetalle => !!fuente)
-      .map((fuente, index) => ({
-        key: `${index}-${fuente.nombre ?? ''}`,
-        title: fuente.nombre?.trim() || `Aplicativo ${index + 1}`,
-        fuente,
-      })),
-  );
+  /** Los acordeones de la plantilla o, si no los trae, uno por fuente en el orden en que llegan. */
+  protected readonly items = computed<AccordionItem[]>(() => {
+    const config = this.block().accordion;
+    const fuentes = (resourceValue(this.fuentes)?.data ?? []).filter(
+      (fuente): fuente is FuenteDetalle => !!fuente,
+    );
+    if (config.items?.length) {
+      const porNombre = new Map(
+        fuentes.filter((fuente) => !!fuente.nombre).map((fuente) => [normalize(fuente.nombre!), fuente]),
+      );
+      return config.items.map((item, index) => fromTemplate(item, index, porNombre, config));
+    }
+    return fuentes.map((fuente, index) => fromData(fuente, index, config));
+  });
 
   /** El título admite `{campo}` de la respuesta (p. ej. el nombre del cliente, si el back lo envía). */
   protected readonly title = computed(() => {
@@ -129,13 +270,14 @@ export class ViewAccordion {
   protected readonly type = computed(() => this.block().accordion.type ?? 'multiple');
 
   private readonly columnCount = computed(() => this.block().accordion.layoutColumns ?? 1);
+  private readonly skeletonCount = computed(() => this.block().accordion.items?.length || SKELETON_ITEMS);
 
   /** Reparte los acordeones en orden: la primera mitad a la izquierda y el resto a la derecha. */
   protected readonly layoutColumns = computed(() => split(this.items(), this.columnCount()));
 
   protected readonly skeletonColumns = computed(() =>
     split(
-      Array.from({ length: SKELETON_ITEMS }, (_, index) => index),
+      Array.from({ length: this.skeletonCount() }, (_, index) => index),
       this.columnCount(),
     ),
   );

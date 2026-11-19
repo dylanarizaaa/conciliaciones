@@ -7,129 +7,129 @@
   "resultado": {
     "data": [
       {
-        "nombre": "Recargas Pago en Casa",
+        "nombre": "fuentePagoEnCasa",
         "datos": [
           {
-            "nombre": "Número de guía",
+            "nombre": "numeroGuia",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "Estado",
+            "nombre": "estado",
             "tipo": "string",
             "valor": "Entregado"
           },
           {
-            "nombre": "Recaudo",
+            "nombre": "recaudo",
             "tipo": "decimal",
             "valor": 6200000
           },
           {
-            "nombre": "Diferencia",
+            "nombre": "diferencia",
             "tipo": "decimal",
             "valor": 3100000
           }
         ]
       },
       {
-        "nombre": "Recargas Alcarrito",
+        "nombre": "fuenteAlcarrito",
         "datos": [
           {
-            "nombre": "Número de guía",
+            "nombre": "numeroGuia",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "Estado",
+            "nombre": "estado",
             "tipo": "string",
             "valor": "Entregado"
           },
           {
-            "nombre": "Recaudo",
+            "nombre": "recaudo",
             "tipo": "decimal",
             "valor": 3100000
           },
           {
-            "nombre": "Diferencia",
+            "nombre": "diferencia",
             "tipo": "decimal",
             "valor": 0
           }
         ]
       },
       {
-        "nombre": "Recargas Novasoft",
+        "nombre": "fuenteNovasoft",
         "datos": []
       },
       {
-        "nombre": "Recargas Controller",
+        "nombre": "fuenteController",
         "datos": [
           {
-            "nombre": "Número de guía",
+            "nombre": "numeroGuia",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "Concepto 1",
+            "nombre": "concepto1",
             "tipo": "string",
             "valor": "Valor concepto 1"
           },
           {
-            "nombre": "Concepto 2",
+            "nombre": "concepto2",
             "tipo": "string",
             "valor": "Valor concepto 2"
           },
           {
-            "nombre": "Concepto 3",
+            "nombre": "concepto3",
             "tipo": "string",
             "valor": "Valor concepto 3"
           }
         ]
       },
       {
-        "nombre": "Recargas Miti Miti",
+        "nombre": "fuenteMitiMiti",
         "datos": [
           {
-            "nombre": "Número de guía",
+            "nombre": "numeroGuia",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "Estado",
+            "nombre": "estado",
             "tipo": "string",
             "valor": "En distribución"
           },
           {
-            "nombre": "Recaudo",
+            "nombre": "recaudo",
             "tipo": "decimal",
             "valor": 3100000
           },
           {
-            "nombre": "Diferencia",
+            "nombre": "diferencia",
             "tipo": "decimal",
             "valor": 0
           }
         ]
       },
       {
-        "nombre": "Recargas APP",
+        "nombre": "fuenteApp",
         "datos": [
           {
-            "nombre": "Número de guía",
+            "nombre": "numeroGuia",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "Estado",
+            "nombre": "estado",
             "tipo": "string",
             "valor": "Entregado"
           },
           {
-            "nombre": "Recaudo",
+            "nombre": "recaudo",
             "tipo": "decimal",
             "valor": 3100000
           },
           {
-            "nombre": "Diferencia",
+            "nombre": "diferencia",
             "tipo": "decimal",
             "valor": 0
           }

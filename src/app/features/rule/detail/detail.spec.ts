@@ -8,6 +8,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import plantillaBack from '../../../../../docs/contrato-vista/ejemplos/back/plantilla-detalle.response.json';
 import fuentesEjemplo from '../../../../../docs/contrato-vista/ejemplos/fuentes-detalle.response.json';
 import historialEjemplo from '../../../../../docs/contrato-vista/ejemplos/detalle-historial.response.json';
 import plantillaEjemplo from '../../../../../docs/contrato-vista/ejemplos/detalle-plantilla.response.json';
@@ -27,8 +28,9 @@ import type { ApiResponse } from '../../../core/http/api-response';
 import { Detail } from './detail';
 
 /** Respuestas de ejemplo que debe devolver el back (`docs/contrato-vista/ejemplos`, forma del swagger). */
-const PLANTILLA = (plantillaEjemplo as unknown as ApiResponse<{ plantilla: ViewTemplate }>).resultado
-  .plantilla;
+const PLANTILLA = (plantillaEjemplo as unknown as ApiResponse<ViewTemplate>).resultado;
+/** Plantilla tal como la devuelve hoy el back (`docs/contrato-vista/ejemplos/back`). */
+const PLANTILLA_BACK = (plantillaBack as unknown as ApiResponse<ViewTemplate>).resultado;
 const FUENTES = (fuentesEjemplo as unknown as ApiResponse<FuentesDetalle>).resultado;
 const HISTORIAL = (historialEjemplo as unknown as ApiResponse<RegistrosPagina>).resultado;
 
@@ -170,7 +172,7 @@ describe('Detail', () => {
   async function cargar(plantilla: ViewTemplate = PLANTILLA, fuentes: FuentesDetalle = FUENTES): Promise<void> {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla }));
+    expectPlantilla().flush(ok(plantilla));
     await settle();
     expectFuentes().flush(ok(fuentes));
     expectHistorial().flush(ok(HISTORIAL));
@@ -203,7 +205,7 @@ describe('Detail', () => {
     expect(element.querySelector('app-view-block')).toBeNull();
 
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
+    expectPlantilla().flush(ok(PLANTILLA));
     await settle();
 
     // Con la plantilla ya se conocen los bloques: cada uno pide sus datos y muestra su skeleton.
@@ -260,7 +262,7 @@ describe('Detail', () => {
     );
   });
 
-  it('abre una fuente y muestra sus datos: título por `titleField` y celdas por `tipo`', async () => {
+  it('abre un acordeón: título de la tarjeta con {campo} y columnas leídas de su fuente', async () => {
     await cargar();
 
     trigger('Recargas Pago en Casa').click();
@@ -272,7 +274,7 @@ describe('Detail', () => {
     expect(panel.getAttribute('role')).toBe('region');
     expect(panel.getAttribute('aria-labelledby')).toBe(trigger('Recargas Pago en Casa').id);
     expect(text(panel.querySelector('[role="heading"]'))).toBe('Número de guía: 70002333336');
-    // `decimal` → CurrencyCell (cellsByType de la plantilla); "Número de guía" no se repite.
+    // Cada columna lee el dato cuyo `nombre` es su `accessorKey`; la celda la pone la plantilla.
     expect(datos('Recargas Pago en Casa')).toEqual([
       'Estado: Entregado',
       'Recaudo: $ 6.200.000',
@@ -294,8 +296,8 @@ describe('Detail', () => {
     expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('sin `cellsByType` usa la celda por defecto de cada tipo', async () => {
-    await cargar(conAcordeon({}, { cellsByType: undefined, titleField: undefined }), {
+  it('sin `items` en la plantilla: un acordeón por fuente y la celda por defecto de cada tipo', async () => {
+    await cargar(conAcordeon({}, { items: undefined, cellsByType: undefined, titleField: undefined }), {
       data: [
         {
           nombre: 'Recargas APP',
@@ -348,15 +350,15 @@ describe('Detail', () => {
     expect(panel.querySelector('dl')).toBeNull();
   });
 
-  it('un dato sin valor dentro de una fuente con datos se muestra como "Sin dato"', async () => {
+  it('un dato sin valor (o que no llega) se muestra como "Sin dato"; sin el dato del título, no hay título', async () => {
     await cargar(PLANTILLA, {
       data: [
         {
-          nombre: 'Recargas Pago en Casa',
+          // Los nombres no distinguen mayúsculas.
+          nombre: 'FUENTEPAGOENCASA',
           datos: [
-            { nombre: 'Número de guía', tipo: 'string', valor: '70002333336' },
             { nombre: 'Estado', tipo: 'string', valor: null },
-            { nombre: 'Recaudo', tipo: 'decimal', valor: 0 },
+            { nombre: 'recaudo', tipo: 'decimal', valor: 0 },
           ],
         },
       ],
@@ -365,16 +367,115 @@ describe('Detail', () => {
     trigger('Recargas Pago en Casa').click();
     await stable();
 
-    expect(datos('Recargas Pago en Casa')).toEqual(['Estado: —Sin dato', 'Recaudo: $ 0']);
+    expect(contenido('Recargas Pago en Casa').querySelector('[role="heading"]')).toBeNull();
+    expect(datos('Recargas Pago en Casa')).toEqual([
+      'Estado: —Sin dato',
+      'Recaudo: $ 0',
+      'Diferencia: —Sin dato',
+    ]);
   });
 
-  it('sin fuentes muestra un estado vacío en lugar de los acordeones', async () => {
+  it('un acordeón cuya fuente no llega muestra el mensaje de la plantilla', async () => {
     await cargar(PLANTILLA, { data: [] });
+
+    // Con `items`, los acordeones salen de la plantilla aunque no lleguen fuentes.
+    expect(element.querySelectorAll('hlm-accordion-trigger')).toHaveLength(6);
+    trigger('Recargas APP').click();
+    await stable();
+    expect(text(contenido('Recargas APP'))).toBe('Sin información en este aplicativo.');
+  });
+
+  it('sin `items` ni fuentes muestra un estado vacío en lugar de los acordeones', async () => {
+    await cargar(conAcordeon({}, { items: undefined }), { data: [] });
 
     expect(text(element.querySelector('app-view-accordion app-empty-state'))).toBe(
       'No hay información de los aplicativos para esta diferencia.',
     );
     expect(element.querySelector('hlm-accordion-trigger')).toBeNull();
+  });
+
+  it('abre al entrar los acordeones con `defaultOpen`', async () => {
+    const [acordeones] = PLANTILLA.blocks;
+    if (acordeones.type !== 'accordion') {
+      throw new Error('El primer bloque del ejemplo debe ser el de acordeones.');
+    }
+    await cargar(
+      conAcordeon(
+        {},
+        { items: acordeones.accordion.items!.map((item, index) => ({ ...item, defaultOpen: index === 3 })) },
+      ),
+    );
+
+    expect(trigger('Recargas Controller').getAttribute('aria-expanded')).toBe('true');
+    expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('pinta la plantilla real del back: sin versión, fuente fija y títulos asociados en el front', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await navigate();
+      flushNombres();
+      expectPlantilla().flush(ok(PLANTILLA_BACK));
+      await settle();
+      // La plantilla trae una ruta vieja en `dataSource`; el front usa `fuentes-detalle`.
+      expectFuentes().flush(
+        ok({
+          data: [
+            {
+              nombre: 'fuentePrepagoMovimiento',
+              datos: [
+                { nombre: 'idMovimientoPrepago', tipo: 'long', valor: 3452 },
+                { nombre: 'idPrepagoCliente', tipo: 'string', valor: 'C-1' },
+                { nombre: 'descripcionCorta', tipo: 'string', valor: 'Recarga' },
+              ],
+            },
+            {
+              nombre: 'fuentePrepagoDetalleCliente',
+              datos: [
+                { nombre: 'idPrepagoClienteDetalle', tipo: 'string', valor: 'C-1' },
+                { nombre: 'primerNombre', tipo: 'string', valor: 'Juan' },
+              ],
+            },
+          ],
+        }),
+      );
+      await stable();
+
+      expect(element.querySelector('app-error-state')).toBeNull();
+      // La plantilla usa el id técnico como título: el front lo asocia con el nombre visible.
+      expect([...element.querySelectorAll('hlm-accordion-trigger button')].map(text)).toEqual([
+        'Prepago · Detalle del movimiento',
+        'Prepago · Movimiento',
+        'Prepago · Detalle de la cuenta',
+        'Prepago · Detalle del cliente',
+        'Controller · Admisión',
+        'Controller · Forma de pago de la guía',
+        'Controller · Formas de pago',
+      ]);
+
+      trigger('Prepago · Movimiento').click();
+      trigger('Prepago · Detalle del cliente').click();
+      trigger('Controller · Admisión').click();
+      await stable();
+      expect(text(contenido('Prepago · Movimiento').querySelector('[role="heading"]'))).toBe(
+        'Id Movimiento Prepago: 3452',
+      );
+      // "Id Movimiento Prepago" ya está en el título de la tarjeta: no se repite en la lista.
+      expect(datos('Prepago · Movimiento')).toEqual([
+        'Id Prepago Cliente: C-1',
+        'Id Tipo Movimiento: —Sin dato',
+        'Descripción Corta: Recarga',
+      ]);
+      // La plantilla repite la columna "primerNombre": se pinta tal cual, sin errores.
+      expect(datos('Prepago · Detalle del cliente').slice(0, 2)).toEqual([
+        'Primer Nombre: Juan',
+        'Primer Nombre: Juan',
+      ]);
+      expect(text(contenido('Controller · Admisión'))).toBe('Sin información en este aplicativo.');
+      expect(warn).not.toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('el título de la sección admite {campo} de la respuesta de las fuentes', async () => {
@@ -442,7 +543,7 @@ describe('Detail', () => {
   it('muestra el estado vacío de la tabla que define la plantilla', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
+    expectPlantilla().flush(ok(PLANTILLA));
     await settle();
     expectFuentes().flush(ok(FUENTES));
     expectHistorial().flush(ok({ totalCount: 0, totalPages: 0, pageNumber: 1, pageSize: 0, data: [] }));
@@ -458,7 +559,7 @@ describe('Detail', () => {
   it('si falla un bloque, muestra su error y deja reintentar sin afectar a los demás', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
+    expectPlantilla().flush(ok(PLANTILLA));
     await settle();
     expectFuentes().flush('error', { status: 500, statusText: 'Server Error' });
     expectHistorial().flush(ok(HISTORIAL));
@@ -480,7 +581,7 @@ describe('Detail', () => {
   it('si falla la plantilla, muestra el error de la pantalla y deja reintentar', async () => {
     await navigate();
     flushNombres();
-    expectPlantilla().flush(ok({ plantilla: { ...PLANTILLA, schemaVersion: '2.0.0' } }));
+    expectPlantilla().flush(ok({ ...PLANTILLA, schemaVersion: '2.0.0' }));
     await stable();
 
     expect(text(element.querySelector('app-error-state'))).toContain(
@@ -490,7 +591,7 @@ describe('Detail', () => {
 
     element.querySelector<HTMLButtonElement>('app-error-state button')!.click();
     await settle();
-    expectPlantilla().flush(ok({ plantilla: PLANTILLA }));
+    expectPlantilla().flush(ok(PLANTILLA));
     await settle();
     expectFuentes().flush(ok(FUENTES));
     expectHistorial().flush(ok(HISTORIAL));
@@ -522,7 +623,12 @@ describe('Detail', () => {
     expectHistorial('otro-caso').flush(ok({ ...HISTORIAL, data: HISTORIAL.data!.slice(0, 1), totalCount: 1 }));
     await stable();
 
-    expect(element.querySelectorAll('hlm-accordion-trigger')).toHaveLength(1);
+    // Los acordeones son los de la plantilla; los datos, los del caso nuevo.
+    trigger('Recargas Pago en Casa').click();
+    trigger('Recargas Alcarrito').click();
+    await stable();
+    expect(datos('Recargas Pago en Casa')).toContain('Recaudo: $ 6.200.000');
+    expect(text(contenido('Recargas Alcarrito'))).toBe('Sin información en este aplicativo.');
     expect(filas()).toHaveLength(1);
   });
 
@@ -554,7 +660,7 @@ describe('Detail', () => {
     try {
       await navigate();
       flushNombres();
-      expectPlantilla().flush(ok({ plantilla }));
+      expectPlantilla().flush(ok(plantilla));
       await settle();
       expectFuentes().flush(ok(FUENTES));
       await stable();

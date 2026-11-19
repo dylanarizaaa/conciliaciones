@@ -5,221 +5,434 @@
   "errores": [],
   "mensajeError": null,
   "resultado": {
-    "plantilla": {
-      "schemaVersion": "1.1.0",
-      "id": "caso-detalle",
-      "revision": "2026-11-10T00:00:00Z",
-      "title": "Detalle de la diferencia",
-      "layout": {
-        "type": "stack",
-        "items": [
-          {
-            "blockId": "aplicativos"
-          },
-          {
-            "blockId": "pestanas"
-          }
-        ]
-      },
-      "blocks": [
+    "schemaVersion": "1.1.0",
+    "id": "caso-detalle",
+    "revision": "2026-11-10T00:00:00Z",
+    "title": "Detalle de la diferencia",
+    "layout": {
+      "type": "stack",
+      "items": [
         {
-          "id": "aplicativos",
-          "type": "accordion",
-          "dataSource": {
-            "path": "/Conciliaciones/fuentes-detalle",
-            "query": {
-              "conciliacionId": "{conciliacionId}"
+          "blockId": "aplicativos"
+        },
+        {
+          "blockId": "pestanas"
+        }
+      ]
+    },
+    "blocks": [
+      {
+        "id": "aplicativos",
+        "type": "accordion",
+        "accordion": {
+          "type": "multiple",
+          "layoutColumns": 2,
+          "items": [
+            {
+              "id": "fuentePagoEnCasa",
+              "title": "Recargas Pago en Casa",
+              "content": {
+                "title": "Número de guía: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "estado",
+                    "accessorKey": "estado",
+                    "header": "Estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "accessorKey": "recaudo",
+                    "header": "Recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "accessorKey": "diferencia",
+                    "header": "Diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteAlcarrito",
+              "title": "Recargas Alcarrito",
+              "content": {
+                "title": "Número de guía: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "estado",
+                    "accessorKey": "estado",
+                    "header": "Estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "accessorKey": "recaudo",
+                    "header": "Recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "accessorKey": "diferencia",
+                    "header": "Diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteNovasoft",
+              "title": "Recargas Novasoft",
+              "content": {
+                "title": "Número de guía: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "estado",
+                    "accessorKey": "estado",
+                    "header": "Estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "accessorKey": "recaudo",
+                    "header": "Recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "accessorKey": "diferencia",
+                    "header": "Diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteController",
+              "title": "Recargas Controller",
+              "content": {
+                "title": "Número de guía: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "concepto1",
+                    "accessorKey": "concepto1",
+                    "header": "Concepto 1"
+                  },
+                  {
+                    "id": "concepto2",
+                    "accessorKey": "concepto2",
+                    "header": "Concepto 2"
+                  },
+                  {
+                    "id": "concepto3",
+                    "accessorKey": "concepto3",
+                    "header": "Concepto 3"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteMitiMiti",
+              "title": "Recargas Miti Miti",
+              "content": {
+                "title": "Número de guía: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "estado",
+                    "accessorKey": "estado",
+                    "header": "Estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "accessorKey": "recaudo",
+                    "header": "Recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "accessorKey": "diferencia",
+                    "header": "Diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteApp",
+              "title": "Recargas APP",
+              "content": {
+                "title": "Número de guía: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "estado",
+                    "accessorKey": "estado",
+                    "header": "Estado"
+                  },
+                  {
+                    "id": "recaudo",
+                    "accessorKey": "recaudo",
+                    "header": "Recaudo",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "diferencia",
+                    "accessorKey": "diferencia",
+                    "header": "Diferencia",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
             }
+          ]
+        }
+      },
+      {
+        "id": "pestanas",
+        "type": "tabs",
+        "tabs": {
+          "defaultTab": "historial",
+          "items": [
+            {
+              "id": "historial",
+              "title": "Historial de cambios",
+              "blockId": "historial"
+            }
+          ]
+        }
+      },
+      {
+        "id": "historial",
+        "type": "table",
+        "title": "Historial de cambios",
+        "dataSource": {
+          "path": "/Conciliaciones/historial-cambios",
+          "query": {
+            "conciliacionId": "{conciliacionId}"
           },
-          "accordion": {
-            "type": "multiple",
-            "layoutColumns": 2,
-            "titleField": "Número de guía",
-            "cellsByType": {
-              "decimal": {
+          "pagination": {
+            "mode": "none"
+          },
+          "sorting": {
+            "mode": "client",
+            "multi": false
+          }
+        },
+        "table": {
+          "rowId": "idCambio",
+          "emptyState": {
+            "title": "Este caso aún no tiene cambios.",
+            "description": "Cuando se registre un cambio aparecerá aquí."
+          },
+          "columns": [
+            {
+              "id": "regla",
+              "accessorKey": "regla",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Regla"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 278
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "correo",
+              "accessorKey": "correo",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Correo"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 224
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "medioPago",
+              "accessorKey": "medioPago",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Medio de pago"
+                }
+              },
+              "cell": {
+                "component": "TextCell",
+                "inputs": {
+                  "truncate": true
+                }
+              },
+              "meta": {
+                "width": 204
+              },
+              "enableSorting": true,
+              "sortType": "text"
+            },
+            {
+              "id": "valor",
+              "accessorKey": "valor",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Valor"
+                }
+              },
+              "cell": {
                 "component": "CurrencyCell",
                 "inputs": {
                   "currency": "COP",
                   "maximumFractionDigits": 0
                 }
-              }
+              },
+              "meta": {
+                "width": 117
+              },
+              "enableSorting": true,
+              "sortType": "basic"
             },
-            "emptyState": {
-              "title": "Sin información en este aplicativo."
+            {
+              "id": "fechaCreacion",
+              "accessorKey": "fechaCreacion",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Fecha de creación"
+                }
+              },
+              "cell": {
+                "component": "DateCell",
+                "inputs": {
+                  "dateStyle": "medium",
+                  "timeZone": "America/Bogota"
+                }
+              },
+              "meta": {
+                "width": 211
+              },
+              "enableSorting": true,
+              "sortType": "datetime"
+            },
+            {
+              "id": "fechaAprobacion",
+              "accessorKey": "fechaAprobacion",
+              "header": {
+                "component": "SortIndicator",
+                "inputs": {
+                  "label": "Fecha de aprobación"
+                }
+              },
+              "cell": {
+                "component": "DateCell",
+                "inputs": {
+                  "dateStyle": "medium",
+                  "timeZone": "America/Bogota"
+                }
+              },
+              "meta": {
+                "width": 206
+              },
+              "enableSorting": true,
+              "sortType": "datetime"
             }
-          }
-        },
-        {
-          "id": "pestanas",
-          "type": "tabs",
-          "tabs": {
-            "defaultTab": "historial",
-            "items": [
-              {
-                "id": "historial",
-                "title": "Historial de cambios",
-                "blockId": "historial"
-              }
-            ]
-          }
-        },
-        {
-          "id": "historial",
-          "type": "table",
-          "title": "Historial de cambios",
-          "dataSource": {
-            "path": "/Conciliaciones/historial-cambios",
-            "query": {
-              "conciliacionId": "{conciliacionId}"
-            },
-            "pagination": {
-              "mode": "none"
-            },
-            "sorting": {
-              "mode": "client",
-              "multi": false
-            }
-          },
-          "table": {
-            "rowId": "idCambio",
-            "emptyState": {
-              "title": "Este caso aún no tiene cambios.",
-              "description": "Cuando se registre un cambio aparecerá aquí."
-            },
-            "columns": [
-              {
-                "id": "regla",
-                "accessorKey": "regla",
-                "header": {
-                  "component": "SortIndicator",
-                  "inputs": {
-                    "label": "Regla"
-                  }
-                },
-                "cell": {
-                  "component": "TextCell",
-                  "inputs": {
-                    "truncate": true
-                  }
-                },
-                "meta": {
-                  "width": 278
-                },
-                "enableSorting": true,
-                "sortType": "text"
-              },
-              {
-                "id": "correo",
-                "accessorKey": "correo",
-                "header": {
-                  "component": "SortIndicator",
-                  "inputs": {
-                    "label": "Correo"
-                  }
-                },
-                "cell": {
-                  "component": "TextCell",
-                  "inputs": {
-                    "truncate": true
-                  }
-                },
-                "meta": {
-                  "width": 224
-                },
-                "enableSorting": true,
-                "sortType": "text"
-              },
-              {
-                "id": "medioPago",
-                "accessorKey": "medioPago",
-                "header": {
-                  "component": "SortIndicator",
-                  "inputs": {
-                    "label": "Medio de pago"
-                  }
-                },
-                "cell": {
-                  "component": "TextCell",
-                  "inputs": {
-                    "truncate": true
-                  }
-                },
-                "meta": {
-                  "width": 204
-                },
-                "enableSorting": true,
-                "sortType": "text"
-              },
-              {
-                "id": "valor",
-                "accessorKey": "valor",
-                "header": {
-                  "component": "SortIndicator",
-                  "inputs": {
-                    "label": "Valor"
-                  }
-                },
-                "cell": {
-                  "component": "CurrencyCell",
-                  "inputs": {
-                    "currency": "COP",
-                    "maximumFractionDigits": 0
-                  }
-                },
-                "meta": {
-                  "width": 117
-                },
-                "enableSorting": true,
-                "sortType": "basic"
-              },
-              {
-                "id": "fechaCreacion",
-                "accessorKey": "fechaCreacion",
-                "header": {
-                  "component": "SortIndicator",
-                  "inputs": {
-                    "label": "Fecha de creación"
-                  }
-                },
-                "cell": {
-                  "component": "DateCell",
-                  "inputs": {
-                    "dateStyle": "medium",
-                    "timeZone": "America/Bogota"
-                  }
-                },
-                "meta": {
-                  "width": 211
-                },
-                "enableSorting": true,
-                "sortType": "datetime"
-              },
-              {
-                "id": "fechaAprobacion",
-                "accessorKey": "fechaAprobacion",
-                "header": {
-                  "component": "SortIndicator",
-                  "inputs": {
-                    "label": "Fecha de aprobación"
-                  }
-                },
-                "cell": {
-                  "component": "DateCell",
-                  "inputs": {
-                    "dateStyle": "medium",
-                    "timeZone": "America/Bogota"
-                  }
-                },
-                "meta": {
-                  "width": 206
-                },
-                "enableSorting": true,
-                "sortType": "datetime"
-              }
-            ]
-          }
+          ]
         }
-      ]
-    }
+      }
+    ]
   }
 }

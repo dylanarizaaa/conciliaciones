@@ -37,7 +37,7 @@ import {
   resolveQuery,
   serializeSorting,
 } from '../../core/data-access/vista.utils';
-import { VistasService } from '../../core/data-access/vistas.service';
+import { FUENTES, VistasService } from '../../core/data-access/vistas.service';
 import {
   formatCurrency,
   formatDateTime,
@@ -80,6 +80,9 @@ const fallbackRowId = (_: TableRow, index: number) => `fila-${index}`;
 
 /** Acciones fijas de la pantalla: no vienen de la plantilla, son las mismas en todas las reglas. */
 type Accion = 'resolver' | 'descargar';
+
+/** Título de la sección de la tabla (diseño); la plantilla puede cambiarlo con `title`. */
+const TITULO_DIFERENCIAS = 'Diferencias por resolver';
 
 const ETIQUETAS: Readonly<Record<Accion, string>> = {
   resolver: 'Resolver diferencias',
@@ -240,8 +243,9 @@ export class Rule {
         return undefined;
       }
       return {
-        path: resolveApiPath(bloque.dataSource.path, this.pathParams()),
-        query: resolveQuery(bloque.dataSource.query, this.pathParams()),
+        // La fuente es fija de la pantalla; de la plantilla solo se toman paginación y orden.
+        path: resolveApiPath(FUENTES.casosRegla.path, this.pathParams()),
+        query: resolveQuery(FUENTES.casosRegla.query, this.pathParams()),
         pageNumber: this.pageNumber(),
         pageSize: this.pageSize(),
         sort: this.serverSorting() ? this.sorting() : [],
@@ -385,6 +389,7 @@ export class Rule {
   // --- Acciones de la pantalla ---------------------------------------------------------------
 
   protected readonly etiquetas = ETIQUETAS;
+  protected readonly tituloDiferencias = TITULO_DIFERENCIAS;
   /** Acción en curso. */
   protected readonly ejecutando = signal<Accion | null>(null);
   /** Resultado de la última acción, para lectores de pantalla. */

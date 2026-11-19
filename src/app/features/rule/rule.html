@@ -52,7 +52,7 @@
         <section class="flex flex-col gap-6" aria-labelledby="diferencias-title">
           <!-- Enfocable por código: al cerrar el modal de resultado el foco vuelve a la lista. -->
           <h2 appSectionTitle id="diferencias-title" tabindex="-1" class="outline-none">
-            {{ bloque.title ?? 'Resultados' }}
+            {{ bloque.title || tituloDiferencias }}
           </h2>
 
           @if (errorAccion(); as accion) {

@@ -125,7 +125,13 @@ export function assertSupportedTemplate(
   template: ViewTemplate,
   requiredBlock?: ViewBlock['type'],
 ): ViewTemplate {
-  const major = Number.parseInt(template?.schemaVersion?.split('.')[0] ?? '', 10);
+  if (!template || typeof template !== 'object') {
+    throw new ApiError('La regla no tiene una plantilla configurada.', 0, []);
+  }
+  // Sin `schemaVersion` se asume la versión mayor que entiende el front.
+  const major = template.schemaVersion
+    ? Number.parseInt(template.schemaVersion.split('.')[0] ?? '', 10)
+    : SUPPORTED_SCHEMA_MAJOR;
   if (major !== SUPPORTED_SCHEMA_MAJOR) {
     throw new ApiError(
       `La plantilla usa la versión ${template?.schemaVersion ?? 'desconocida'} del contrato.`,

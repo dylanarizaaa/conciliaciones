@@ -1,0 +1,338 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "revision": "2026-11-11T20:23:19Z",
+    "title": "Detalle de la diferencia",
+    "layout": {
+      "type": "stack",
+      "items": [
+        {
+          "blockId": "29ece394-46c2-4e01-8a5d-d2c95686545b"
+        }
+      ]
+    },
+    "blocks": [
+      {
+        "id": "29ece394-46c2-4e01-8a5d-d2c95686545b",
+        "type": "accordion",
+        "dataSource": {
+          "path": "/Conciliaciones/subprocesos/{subProcesoId}/reglas/{regla}/casos/{casoId}"
+        },
+        "accordion": {
+          "type": "multiple",
+          "items": [
+            {
+              "id": "fuentePrepagoMovimientoDetalle",
+              "title": "fuentePrepagoMovimientoDetalle",
+              "content": {
+                "title": "Código Producto: {codigoProducto}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "codigoProducto",
+                    "accessorKey": "codigoProducto",
+                    "header": "Código Producto"
+                  },
+                  {
+                    "id": "idMovimiento",
+                    "accessorKey": "idMovimiento",
+                    "header": "Id Movimiento",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "fechaCreacion",
+                    "accessorKey": "fechaCreacion",
+                    "header": "Fecha de Creación"
+                  },
+                  {
+                    "id": "valorFinal",
+                    "accessorKey": "valorFinal",
+                    "header": "Valor Final",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "valorOriginal",
+                    "accessorKey": "valorOriginal",
+                    "header": "Valor Original",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuentePrepagoMovimiento",
+              "title": "fuentePrepagoMovimiento",
+              "content": {
+                "title": "Id Movimiento Prepago: {idMovimientoPrepago}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "idMovimientoPrepago",
+                    "accessorKey": "idMovimientoPrepago",
+                    "header": "Id Movimiento Prepago",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "idPrepagoCliente",
+                    "accessorKey": "idPrepagoCliente",
+                    "header": "Id Prepago Cliente"
+                  },
+                  {
+                    "id": "idTipoMovimiento",
+                    "accessorKey": "idTipoMovimiento",
+                    "header": "Id Tipo Movimiento"
+                  },
+                  {
+                    "id": "descripcionCorta",
+                    "accessorKey": "descripcionCorta",
+                    "header": "Descripción Corta"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuentePrepagoDetalleCuenta",
+              "title": "fuentePrepagoDetalleCuenta",
+              "content": {
+                "title": "Id Movimiento Cuenta: {idMovimientoCuenta}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "idMovimientoCuenta",
+                    "accessorKey": "idMovimientoCuenta",
+                    "header": "Id Movimiento Cuenta",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "estadoMovimiento",
+                    "accessorKey": "estadoMovimiento",
+                    "header": "Estado Movimiento"
+                  },
+                  {
+                    "id": "bancoTransferencia",
+                    "accessorKey": "bancoTransferencia",
+                    "header": "Banco Transferencia"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuentePrepagoDetalleCliente",
+              "title": "fuentePrepagoDetalleCliente",
+              "content": {
+                "title": "Id Prepago Cliente: {idPrepagoClienteDetalle}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "idPrepagoClienteDetalle",
+                    "accessorKey": "idPrepagoClienteDetalle",
+                    "header": "Id Prepago Cliente"
+                  },
+                  {
+                    "id": "primerNombre",
+                    "accessorKey": "primerNombre",
+                    "header": "Primer Nombre"
+                  },
+                  {
+                    "id": "primerNombre",
+                    "accessorKey": "primerNombre",
+                    "header": "Primer Nombre"
+                  },
+                  {
+                    "id": "segundoNombre",
+                    "accessorKey": "segundoNombre",
+                    "header": "Segundo Nombre"
+                  },
+                  {
+                    "id": "primerApellido",
+                    "accessorKey": "primerApellido",
+                    "header": "Primer Apellido"
+                  },
+                  {
+                    "id": "segundoApellido",
+                    "accessorKey": "segundoApellido",
+                    "header": "Segundo Apellido"
+                  },
+                  {
+                    "id": "numeroBolsillo",
+                    "accessorKey": "numeroBolsillo",
+                    "header": "Número de Bolsillo"
+                  },
+                  {
+                    "id": "numeroDocumento",
+                    "accessorKey": "numeroDocumento",
+                    "header": "Número Documento"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteControllerAdmision",
+              "title": "fuenteControllerAdmision",
+              "content": {
+                "title": "Número Guia: {numeroGuia}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "idAdminisionMensajeriaAdm",
+                    "accessorKey": "idAdminisionMensajeriaAdm",
+                    "header": "Id Admisión Mensajeria",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "numeroGuia",
+                    "accessorKey": "numeroGuia",
+                    "header": "Número Guia"
+                  },
+                  {
+                    "id": "valorTotal",
+                    "accessorKey": "valorTotal",
+                    "header": "Valor total",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "fechaPago",
+                    "accessorKey": "fechaPago",
+                    "header": "Fecha de Pago"
+                  },
+                  {
+                    "id": "IdCentroServicioOrigen",
+                    "accessorKey": "IdCentroServicioOrigen",
+                    "header": "Id centro de servicio"
+                  },
+                  {
+                    "id": "IdCentroServicioDestino",
+                    "accessorKey": "IdCentroServicioDestino",
+                    "header": "Id centro de destino"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteControllerGuiaFormaPago",
+              "title": "fuenteControllerGuiaFormaPago",
+              "content": {
+                "title": "Id Admisión Mensajeria: {idAdminisionMensajeria}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "idAdminisionMensajeria",
+                    "accessorKey": "idAdminisionMensajeria",
+                    "header": "Id Admisión Mensajeria",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "idFormaPago",
+                    "accessorKey": "idFormaPago",
+                    "header": "Id Forma Pago",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "fuenteControllerFormasPago",
+              "title": "fuenteControllerFormasPago",
+              "content": {
+                "title": "Id Forma Pago: {idFormaPagoTar}",
+                "emptyState": {
+                  "title": "Sin información en este aplicativo."
+                },
+                "columns": [
+                  {
+                    "id": "idFormaPagoTar",
+                    "accessorKey": "idFormaPagoTar",
+                    "header": "Id Forma Pago",
+                    "cell": {
+                      "component": "CurrencyCell",
+                      "inputs": {
+                        "currency": "COP",
+                        "maximumFractionDigits": 0
+                      }
+                    }
+                  },
+                  {
+                    "id": "descripcionFormaPago",
+                    "accessorKey": "descripcionFormaPago",
+                    "header": "Descripción Forma Pago"
+                  }
+                ]
+              }
+            }
+          ],
+          "layoutColumns": 2
+        }
+      }
+    ]
+  }
+}
