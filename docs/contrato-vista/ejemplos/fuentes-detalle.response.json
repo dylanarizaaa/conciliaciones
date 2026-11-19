@@ -7,130 +7,156 @@
   "resultado": {
     "data": [
       {
-        "nombre": "fuentePagoEnCasa",
+        "id": "fuentePagoEnCasa",
+        "nombre": "Recargas Pago en Casa",
         "datos": [
           {
-            "nombre": "numeroGuia",
+            "id": "numeroGuia",
+            "nombre": "Número de guía",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "estado",
+            "id": "estado",
+            "nombre": "Estado",
             "tipo": "string",
             "valor": "Entregado"
           },
           {
-            "nombre": "recaudo",
-            "tipo": "decimal",
+            "id": "recaudo",
+            "nombre": "Recaudo",
+            "tipo": "currency",
             "valor": 6200000
           },
           {
-            "nombre": "diferencia",
-            "tipo": "decimal",
+            "id": "diferencia",
+            "nombre": "Diferencia",
+            "tipo": "currency",
             "valor": 3100000
           }
         ]
       },
       {
-        "nombre": "fuenteAlcarrito",
+        "id": "fuenteAlcarrito",
+        "nombre": "Recargas Alcarrito",
         "datos": [
           {
-            "nombre": "numeroGuia",
+            "id": "numeroGuia",
+            "nombre": "Número de guía",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "estado",
+            "id": "estado",
+            "nombre": "Estado",
             "tipo": "string",
             "valor": "Entregado"
           },
           {
-            "nombre": "recaudo",
-            "tipo": "decimal",
+            "id": "recaudo",
+            "nombre": "Recaudo",
+            "tipo": "currency",
             "valor": 3100000
           },
           {
-            "nombre": "diferencia",
-            "tipo": "decimal",
+            "id": "diferencia",
+            "nombre": "Diferencia",
+            "tipo": "currency",
             "valor": 0
           }
         ]
       },
       {
-        "nombre": "fuenteNovasoft",
+        "id": "fuenteNovasoft",
+        "nombre": "Recargas Novasoft",
         "datos": []
       },
       {
-        "nombre": "fuenteController",
+        "id": "fuenteController",
+        "nombre": "Recargas Controller",
         "datos": [
           {
-            "nombre": "numeroGuia",
+            "id": "numeroGuia",
+            "nombre": "Número de guía",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "concepto1",
+            "id": "concepto1",
+            "nombre": "Concepto 1",
             "tipo": "string",
             "valor": "Valor concepto 1"
           },
           {
-            "nombre": "concepto2",
+            "id": "concepto2",
+            "nombre": "Concepto 2",
             "tipo": "string",
             "valor": "Valor concepto 2"
           },
           {
-            "nombre": "concepto3",
+            "id": "concepto3",
+            "nombre": "Concepto 3",
             "tipo": "string",
             "valor": "Valor concepto 3"
           }
         ]
       },
       {
-        "nombre": "fuenteMitiMiti",
+        "id": "fuenteMitiMiti",
+        "nombre": "Recargas Miti Miti",
         "datos": [
           {
-            "nombre": "numeroGuia",
+            "id": "numeroGuia",
+            "nombre": "Número de guía",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "estado",
+            "id": "estado",
+            "nombre": "Estado",
             "tipo": "string",
             "valor": "En distribución"
           },
           {
-            "nombre": "recaudo",
-            "tipo": "decimal",
+            "id": "recaudo",
+            "nombre": "Recaudo",
+            "tipo": "currency",
             "valor": 3100000
           },
           {
-            "nombre": "diferencia",
-            "tipo": "decimal",
+            "id": "diferencia",
+            "nombre": "Diferencia",
+            "tipo": "currency",
             "valor": 0
           }
         ]
       },
       {
-        "nombre": "fuenteApp",
+        "id": "fuenteApp",
+        "nombre": "Recargas APP",
         "datos": [
           {
-            "nombre": "numeroGuia",
+            "id": "numeroGuia",
+            "nombre": "Número de guía",
             "tipo": "string",
             "valor": "70002333336"
           },
           {
-            "nombre": "estado",
+            "id": "estado",
+            "nombre": "Estado",
             "tipo": "string",
             "valor": "Entregado"
           },
           {
-            "nombre": "recaudo",
-            "tipo": "decimal",
+            "id": "recaudo",
+            "nombre": "Recaudo",
+            "tipo": "currency",
             "valor": 3100000
           },
           {
-            "nombre": "diferencia",
-            "tipo": "decimal",
+            "id": "diferencia",
+            "nombre": "Diferencia",
+            "tipo": "currency",
             "valor": 0
           }
         ]

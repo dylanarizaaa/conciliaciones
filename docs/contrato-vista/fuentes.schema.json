@@ -2,59 +2,78 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:conciliaciones:vista-fuentes:1.1.0",
   "title": "Fuentes de un bloque accordion",
-  "description": "Contenido de resultado de GET /Conciliaciones/fuentes-detalle?conciliacionId= (GetConciliationFuentesDetailResponse). Cada fuente es un acordeón y cada dato una fila etiqueta / valor.",
+  "description": "Contenido de resultado de GET /Conciliaciones/fuentes-detalle?conciliacionId=. Cada fuente se une con el acordeón de la plantilla por id (accordion.items[].id) y cada dato con su columna por id (content.columns[].accessorKey). El orden de la respuesta no importa.",
   "type": "object",
   "required": [
     "data"
   ],
   "properties": {
     "data": {
-      "type": [
-        "array",
-        "null"
-      ],
+      "type": "array",
       "items": {
         "type": "object",
         "required": [
-          "nombre",
+          "id",
           "datos"
         ],
+        "additionalProperties": false,
         "properties": {
+          "id": {
+            "description": "Igual a accordion.items[].id de la plantilla. Único en la respuesta.",
+            "type": "string",
+            "minLength": 1
+          },
           "nombre": {
-            "description": "Título del acordeón (aplicativo).",
+            "description": "Nombre visible de la fuente. Solo se usa como título cuando la plantilla no trae items.",
             "type": [
               "string",
               "null"
             ]
           },
           "datos": {
-            "type": [
-              "array",
-              "null"
-            ],
+            "description": "Vacío si la fuente no tiene información para la conciliación.",
+            "type": "array",
             "items": {
               "type": "object",
               "required": [
-                "nombre",
+                "id",
+                "tipo",
                 "valor"
               ],
+              "additionalProperties": false,
               "properties": {
+                "id": {
+                  "description": "Igual a content.columns[].accessorKey de la plantilla. Único dentro de la fuente.",
+                  "type": "string",
+                  "minLength": 1
+                },
                 "nombre": {
-                  "description": "Etiqueta del dato.",
+                  "description": "Etiqueta visible. Solo se usa cuando la plantilla no trae items (con items manda el header de la columna).",
                   "type": [
                     "string",
                     "null"
                   ]
                 },
                 "tipo": {
-                  "description": "Tipo del valor; elige la celda (accordion.cellsByType o la celda por defecto del front).",
-                  "type": [
+                  "description": "Tipo del valor. Elige la celda cuando la columna no trae cell.",
+                  "enum": [
                     "string",
-                    "null"
+                    "integer",
+                    "decimal",
+                    "currency",
+                    "date",
+                    "datetime",
+                    "boolean"
                   ]
                 },
                 "valor": {
-                  "description": "Montos como número y fechas en ISO 8601. null se muestra como \"—\"."
+                  "description": "Texto, número o booleano; null si no hay dato (no \"\" ni {}). Montos como número; fechas en ISO 8601.",
+                  "type": [
+                    "string",
+                    "number",
+                    "boolean",
+                    "null"
+                  ]
                 }
               }
             }

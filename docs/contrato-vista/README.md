@@ -11,7 +11,7 @@ plantilla del back. El encabezado de cada pantalla y las acciones de Regla ("Res
 | `datos.schema.json` | Página de datos de un bloque de tabla (forma de `GetConciliationRowsResponse`). |
 | `fuentes.schema.json` | Fuentes de un bloque de acordeones (forma de `GetConciliationFuentesDetailResponse`). |
 | `ejemplos/*.json` | Respuestas recomendadas, con la forma del swagger. Las pruebas del front las usan, así que siempre están al día. |
-| `ejemplos/back/*.json` | Plantillas tal como las devuelve hoy el back. Las pruebas comprueban que el front las pinta. |
+| `ejemplos/back/*.json` | Plantillas tal como las devuelve hoy el back y la respuesta de `fuentes-detalle` que les corresponde. Las pruebas comprueban que el front las pinta. |
 
 Las respuestas usan la envoltura del API (`codigoEstado`, `respuestaEstado`, …, `resultado`). El
 swagger declara `proyectos`, `procesos` y `subprocesos` sin envoltura: el front acepta ambas formas.
@@ -112,22 +112,69 @@ front lo convierte en el archivo y usa `nombreArchivo` sin tildes ni espacios; s
 Los bloques de `layout.items` se pintan en ese orden. Un bloque que no está en el layout solo se pinta
 si otro lo referencia (hoy, una pestaña).
 
-**`accordion`**: los datos salen de `fuentes-detalle`. Cada fuente tiene un `nombre` y sus `datos`
-(`nombre`, `tipo`, `valor`).
+**`accordion`**: los datos salen de `fuentes-detalle`. Cada fuente tiene un `id` y sus `datos`
+(`id`, `nombre`, `tipo`, `valor`). La unión con la plantilla es por `id`, nunca por nombre ni por
+orden.
 
 Con `accordion.items` (así lo usa el back), hay un acordeón por elemento:
 
 | Propiedad | Uso |
 | --- | --- |
-| `items[].id` | `nombre` de la fuente en `fuentes-detalle` (sin distinguir mayúsculas). Si la fuente no llega, el acordeón muestra `emptyState`. |
+| `items[].id` | `id` de la fuente en `fuentes-detalle` (sin distinguir mayúsculas). Si la fuente no llega, el acordeón muestra `emptyState`. |
 | `items[].title` | Texto del acordeón. Si falta o es igual al `id`, el front usa el nombre asociado a la fuente. |
 | `items[].defaultOpen` | Abierto al entrar. |
 | `content.title` | Título de la tarjeta, con `{campo}` de los datos: `"Número de guía: {numeroGuia}"`. Si falta algún dato, no se muestra. Los datos del título no se repiten en la lista. |
-| `content.columns[]` | `id`, `accessorKey` (el `nombre` del dato), `header` y `cell` opcional. Sin `cell`, la celda sale del `tipo` del dato. |
+| `content.columns[]` | `id`, `accessorKey` (el `id` del dato), `header` (la etiqueta que se muestra) y `cell` opcional. Sin `cell`, la celda sale del `tipo` del dato. |
 | `content.emptyState` | Mensaje cuando la fuente no llega o ninguna columna trae dato. |
 
-Sin `items`, hay un acordeón por fuente con todos sus datos; `accordion.titleField` dice qué dato va
-como título de la tarjeta.
+Sin `items`, hay un acordeón por fuente con todos sus datos: el título es el `nombre` de la fuente y
+las etiquetas, el `nombre` de cada dato. `accordion.titleField` dice qué dato va como título de la
+tarjeta.
+
+### Respuesta de `fuentes-detalle`
+
+Esquema: `fuentes.schema.json`. Respuesta correcta para la plantilla actual del back, con los datos de
+una consulta real: `ejemplos/back/fuentes-detalle.response.json`.
+
+```json
+{
+  "data": [
+    {
+      "id": "fuentePrepagoMovimiento",
+      "nombre": "Prepago · Movimiento",
+      "datos": [
+        { "id": "idMovimientoPrepago", "nombre": "Id Movimiento Prepago", "tipo": "string", "valor": "19957" },
+        { "id": "idPrepagoCliente", "nombre": "Id Prepago Cliente", "tipo": "string", "valor": "679" },
+        { "id": "idTipoMovimiento", "nombre": "Id Tipo Movimiento", "tipo": "string", "valor": "4" },
+        { "id": "descripcionCorta", "nombre": "Descripción Corta", "tipo": "string", "valor": "Pago Inter Pay APP" }
+      ]
+    },
+    { "id": "fuenteControllerAdmision", "nombre": "Controller · Admisión", "datos": [] }
+  ]
+}
+```
+
+| Campo | Regla |
+| --- | --- |
+| `data[].id` | Igual al `id` del acordeón en la plantilla (`accordion.items[].id`). Único en la respuesta. |
+| `data[].nombre` | Nombre visible de la fuente. Solo se usa sin `items`. |
+| `data[].datos` | `[]` si la fuente no tiene información para la conciliación (o se omite la fuente). |
+| `datos[].id` | Igual al `accessorKey` de la columna. Único dentro de la fuente. |
+| `datos[].nombre` | Etiqueta visible. Solo se usa sin `items`: con `items`, la etiqueta es el `header` de la columna. |
+| `datos[].tipo` | `string`, `integer`, `decimal`, `currency`, `date`, `datetime` o `boolean`. Elige la celda cuando la columna no trae `cell`. Los ids van como `string`. |
+| `datos[].valor` | Texto, número o booleano; `null` si no hay dato (no `""` ni `{}`). Montos como número, fechas en ISO 8601. |
+
+El orden de `data` y de `datos` no importa: el orden en pantalla es el de la plantilla.
+
+La respuesta actual del back no cumple el contrato y por eso el detalle sale vacío:
+
+- `nombre` trae el nombre de la conexión ("Pago de Servicios ConexionPrepago"), repetido entre fuentes, y no hay `id`.
+- Los datos traen la etiqueta en `nombre` ("Código Producto") y no hay `id` (`codigoProducto`).
+- "Valor Final" llega como `{}`.
+- Los ids llegan con `tipo: "number"` y los textos vacíos como `""`.
+
+El front no adivina la unión por nombre ni por posición: una fuente sin `id` no se asocia con ningún
+acordeón. Un valor que no sea escalar se muestra "—".
 
 En los dos casos:
 
@@ -139,7 +186,7 @@ En los dos casos:
 | `accordion.cellsByType` | Celda para cada `tipo` cuando la columna no trae `cell`: `{ "decimal": { "component": "CurrencyCell" } }`. |
 | `accordion.emptyState` | Mensaje por defecto de una fuente sin datos. |
 
-Sin `cell` ni `cellsByType`, el front reconoce los tipos habituales (sin distinguir mayúsculas):
+Sin `cell` ni `cellsByType`, el front reconoce los `tipo` del contrato y otros habituales (sin distinguir mayúsculas):
 
 | `tipo` | Celda |
 | --- | --- |

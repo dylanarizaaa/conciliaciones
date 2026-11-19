@@ -42,24 +42,33 @@ interface AccordionItem {
   readonly emptyState?: EmptyStateDefinition;
 }
 
-/** Datos de una fuente con búsqueda por `nombre` sin distinguir mayúsculas. */
+/**
+ * El contrato pide valores escalares (texto, número, booleano) o `null`. Un objeto o una lista
+ * (p. ej. `{}` de un decimal mal serializado) se trata como dato vacío para no pintar "[object
+ * Object]".
+ */
+function escalar(valor: unknown): unknown {
+  return valor !== null && typeof valor === 'object' ? null : valor;
+}
+
+/** Datos de una fuente con búsqueda por `id` (el `accessorKey` de la columna), sin distinguir mayúsculas. */
 class DatosFuente {
-  private readonly porNombre = new Map<string, { valor: unknown; tipo: string | null }>();
+  private readonly porId = new Map<string, { valor: unknown; tipo: string | null }>();
 
   constructor(fuente: FuenteDetalle | undefined) {
     for (const dato of fuente?.datos ?? []) {
-      if (dato?.nombre) {
-        this.porNombre.set(normalize(dato.nombre), { valor: dato.valor, tipo: dato.tipo });
+      if (dato?.id) {
+        this.porId.set(normalize(dato.id), { valor: escalar(dato.valor), tipo: dato.tipo });
       }
     }
   }
 
-  valor(nombre: string): unknown {
-    return this.porNombre.get(normalize(nombre))?.valor;
+  valor(id: string): unknown {
+    return this.porId.get(normalize(id))?.valor;
   }
 
-  tipo(nombre: string): string | null {
-    return this.porNombre.get(normalize(nombre))?.tipo ?? null;
+  tipo(id: string): string | null {
+    return this.porId.get(normalize(id))?.tipo ?? null;
   }
 
   /** Para las celdas que leen otros campos (p. ej. `currencyField`). */
@@ -71,7 +80,7 @@ class DatosFuente {
 const normalize = (value: string) => value.trim().toLowerCase();
 const PLACEHOLDER = /\{([^{}]+)\}/g;
 
-/** Nombres de los datos que usa un título: "Guía {numeroGuia}" → {"numeroguia"}. */
+/** `id` de los datos que usa un título: "Guía {numeroGuia}" → {"numeroguia"}. */
 function placeholders(template: string | undefined): Set<string> {
   return new Set([...(template ?? '').matchAll(PLACEHOLDER)].map(([, nombre]) => normalize(nombre)));
 }
@@ -105,7 +114,7 @@ function row(
   return { header, value, view: resolve(value, datos.record) };
 }
 
-/** Acordeón definido en la plantilla: su `id` es el `nombre` de la fuente. */
+/** Acordeón definido en la plantilla: lee la fuente con su mismo `id`. */
 function fromTemplate(
   item: AccordionItemDefinition,
   index: number,
@@ -132,21 +141,27 @@ function fromTemplate(
   };
 }
 
-/** Sin `items` en la plantilla: un acordeón por fuente con todos sus datos. */
+/** Sin `items` en la plantilla: un acordeón por fuente con todos sus datos, con sus etiquetas. */
 function fromData(fuente: FuenteDetalle, index: number, config: AccordionDefinition): AccordionItem {
-  const datos = new DatosFuente(fuente);
   const titleField = config.titleField ? normalize(config.titleField) : '';
-  const todos = (fuente.datos ?? []).filter((dato) => !!dato?.nombre);
-  const titulo = todos.find((dato) => normalize(dato.nombre!) === titleField);
+  const todos = (fuente.datos ?? [])
+    .filter((dato) => !!dato && !!(dato.nombre || dato.id))
+    .map((dato) => ({ ...dato, valor: escalar(dato.valor), etiqueta: (dato.nombre || dato.id)! }));
+  const esTitulo = (dato: (typeof todos)[number]) =>
+    !!titleField && [dato.id, dato.nombre].some((clave) => !!clave && normalize(clave) === titleField);
+  const titulo = todos.find(esTitulo);
   const rows = todos
     .filter((dato) => dato !== titulo)
-    .map((dato) => row(dato.nombre!, dato.nombre!, undefined, datos, config));
-  const nombre = fuente.nombre?.trim() || `Aplicativo ${index + 1}`;
+    .map((dato) => ({
+      header: dato.etiqueta,
+      view: valueCellResolver(cellForType(dato.tipo, config.cellsByType), { wrap: true })(dato.valor, {}),
+    }));
+  const id = fuente.id?.trim() || fuente.nombre?.trim() || `Aplicativo ${index + 1}`;
   return {
-    key: `${index}-${nombre}`,
-    title: tituloFuente(nombre),
+    key: `${index}-${id}`,
+    title: tituloFuente(id, fuente.nombre),
     defaultOpen: false,
-    cardTitle: titulo && !isEmptyValue(titulo.valor) ? `${titulo.nombre}: ${titulo.valor}` : '',
+    cardTitle: titulo && !isEmptyValue(titulo.valor) ? `${titulo.etiqueta}: ${String(titulo.valor)}` : '',
     rows,
     empty: todos.every((dato) => isEmptyValue(dato.valor)),
     emptyState: config.emptyState,
@@ -252,10 +267,11 @@ export class ViewAccordion {
       (fuente): fuente is FuenteDetalle => !!fuente,
     );
     if (config.items?.length) {
-      const porNombre = new Map(
-        fuentes.filter((fuente) => !!fuente.nombre).map((fuente) => [normalize(fuente.nombre!), fuente]),
+      // Unión por `id`: el orden de la respuesta no importa y una fuente que no llega queda vacía.
+      const porId = new Map(
+        fuentes.filter((fuente) => !!fuente.id).map((fuente) => [normalize(fuente.id!), fuente]),
       );
-      return config.items.map((item, index) => fromTemplate(item, index, porNombre, config));
+      return config.items.map((item, index) => fromTemplate(item, index, porId, config));
     }
     return fuentes.map((fuente, index) => fromData(fuente, index, config));
   });

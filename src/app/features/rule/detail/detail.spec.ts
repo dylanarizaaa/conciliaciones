@@ -8,6 +8,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
+import fuentesBack from '../../../../../docs/contrato-vista/ejemplos/back/fuentes-detalle.response.json';
 import plantillaBack from '../../../../../docs/contrato-vista/ejemplos/back/plantilla-detalle.response.json';
 import fuentesEjemplo from '../../../../../docs/contrato-vista/ejemplos/fuentes-detalle.response.json';
 import historialEjemplo from '../../../../../docs/contrato-vista/ejemplos/detalle-historial.response.json';
@@ -31,6 +32,8 @@ import { Detail } from './detail';
 const PLANTILLA = (plantillaEjemplo as unknown as ApiResponse<ViewTemplate>).resultado;
 /** Plantilla tal como la devuelve hoy el back (`docs/contrato-vista/ejemplos/back`). */
 const PLANTILLA_BACK = (plantillaBack as unknown as ApiResponse<ViewTemplate>).resultado;
+/** Respuesta correcta de `fuentes-detalle` para la plantilla del back (con los datos de una consulta real). */
+const FUENTES_BACK = (fuentesBack as unknown as ApiResponse<FuentesDetalle>).resultado;
 const FUENTES = (fuentesEjemplo as unknown as ApiResponse<FuentesDetalle>).resultado;
 const HISTORIAL = (historialEjemplo as unknown as ApiResponse<RegistrosPagina>).resultado;
 
@@ -300,14 +303,16 @@ describe('Detail', () => {
     await cargar(conAcordeon({}, { items: undefined, cellsByType: undefined, titleField: undefined }), {
       data: [
         {
+          id: 'fuenteApp',
+          // Sin `items`, el título y las etiquetas salen de la respuesta.
           nombre: 'Recargas APP',
           datos: [
-            { nombre: 'Número de guía', tipo: 'string', valor: '70002333336' },
-            { nombre: 'Recaudo', tipo: 'decimal', valor: 6200000.5 },
-            { nombre: 'Intentos', tipo: 'int', valor: 3 },
-            { nombre: 'Fecha', tipo: 'date', valor: '2026-06-26' },
-            { nombre: 'Pagado', tipo: 'boolean', valor: true },
-            { nombre: 'Nota', tipo: 'otro', valor: 'Revisar' },
+            { id: 'numeroGuia', nombre: 'Número de guía', tipo: 'string', valor: '70002333336' },
+            { id: 'recaudo', nombre: 'Recaudo', tipo: 'decimal', valor: 6200000.5 },
+            { id: 'intentos', nombre: 'Intentos', tipo: 'integer', valor: 3 },
+            { id: 'fecha', nombre: 'Fecha', tipo: 'date', valor: '2026-06-26' },
+            { id: 'pagado', nombre: 'Pagado', tipo: 'boolean', valor: true },
+            { id: 'nota', nombre: 'Nota', tipo: 'otro', valor: 'Revisar' },
           ],
         },
       ],
@@ -354,11 +359,14 @@ describe('Detail', () => {
     await cargar(PLANTILLA, {
       data: [
         {
-          // Los nombres no distinguen mayúsculas.
-          nombre: 'FUENTEPAGOENCASA',
+          // Los ids no distinguen mayúsculas.
+          id: 'FUENTEPAGOENCASA',
+          nombre: null,
           datos: [
-            { nombre: 'Estado', tipo: 'string', valor: null },
-            { nombre: 'recaudo', tipo: 'decimal', valor: 0 },
+            { id: 'Estado', nombre: null, tipo: 'string', valor: null },
+            { id: 'recaudo', nombre: null, tipo: 'currency', valor: 0 },
+            // Fuera de contrato (un decimal mal serializado): se trata como dato vacío.
+            { id: 'diferencia', nombre: null, tipo: 'currency', valor: {} as never },
           ],
         },
       ],
@@ -410,7 +418,7 @@ describe('Detail', () => {
     expect(trigger('Recargas Pago en Casa').getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('pinta la plantilla real del back: sin versión, fuente fija y títulos asociados en el front', async () => {
+  it('pinta la plantilla real del back con su respuesta correcta: une fuentes y datos por id', async () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
       await navigate();
@@ -418,27 +426,8 @@ describe('Detail', () => {
       expectPlantilla().flush(ok(PLANTILLA_BACK));
       await settle();
       // La plantilla trae una ruta vieja en `dataSource`; el front usa `fuentes-detalle`.
-      expectFuentes().flush(
-        ok({
-          data: [
-            {
-              nombre: 'fuentePrepagoMovimiento',
-              datos: [
-                { nombre: 'idMovimientoPrepago', tipo: 'long', valor: 3452 },
-                { nombre: 'idPrepagoCliente', tipo: 'string', valor: 'C-1' },
-                { nombre: 'descripcionCorta', tipo: 'string', valor: 'Recarga' },
-              ],
-            },
-            {
-              nombre: 'fuentePrepagoDetalleCliente',
-              datos: [
-                { nombre: 'idPrepagoClienteDetalle', tipo: 'string', valor: 'C-1' },
-                { nombre: 'primerNombre', tipo: 'string', valor: 'Juan' },
-              ],
-            },
-          ],
-        }),
-      );
+      // El orden de la respuesta no importa: se une por `id`.
+      expectFuentes().flush(ok({ data: [...FUENTES_BACK.data!].reverse() }));
       await stable();
 
       expect(element.querySelector('app-error-state')).toBeNull();
@@ -453,29 +442,74 @@ describe('Detail', () => {
         'Controller · Formas de pago',
       ]);
 
-      trigger('Prepago · Movimiento').click();
-      trigger('Prepago · Detalle del cliente').click();
-      trigger('Controller · Admisión').click();
+      for (const titulo of [
+        'Prepago · Detalle del movimiento',
+        'Prepago · Movimiento',
+        'Prepago · Detalle del cliente',
+        'Controller · Admisión',
+        'Controller · Formas de pago',
+      ]) {
+        trigger(titulo).click();
+      }
       await stable();
-      expect(text(contenido('Prepago · Movimiento').querySelector('[role="heading"]'))).toBe(
-        'Id Movimiento Prepago: 3452',
+
+      const titulo = (acordeon: string) => text(contenido(acordeon).querySelector('[role="heading"]'));
+      expect(titulo('Prepago · Detalle del movimiento')).toBe('Código Producto: 240000143190');
+      // La celda la decide la plantilla (CurrencyCell en un id) y "Valor Final" llega sin dato.
+      expect(datos('Prepago · Detalle del movimiento')).toEqual(
+        expect.arrayContaining(['Id Movimiento: $ 19.957', 'Valor Final: —Sin dato']),
       );
+
       // "Id Movimiento Prepago" ya está en el título de la tarjeta: no se repite en la lista.
+      expect(titulo('Prepago · Movimiento')).toBe('Id Movimiento Prepago: 19957');
       expect(datos('Prepago · Movimiento')).toEqual([
-        'Id Prepago Cliente: C-1',
-        'Id Tipo Movimiento: —Sin dato',
-        'Descripción Corta: Recarga',
+        'Id Prepago Cliente: 679',
+        'Id Tipo Movimiento: 4',
+        'Descripción Corta: Pago Inter Pay APP',
       ]);
+
       // La plantilla repite la columna "primerNombre": se pinta tal cual, sin errores.
-      expect(datos('Prepago · Detalle del cliente').slice(0, 2)).toEqual([
-        'Primer Nombre: Juan',
-        'Primer Nombre: Juan',
+      expect(titulo('Prepago · Detalle del cliente')).toBe('Id Prepago Cliente: 679');
+      expect(datos('Prepago · Detalle del cliente')).toEqual([
+        'Primer Nombre: Cristhian',
+        'Primer Nombre: Cristhian',
+        'Segundo Nombre: —Sin dato',
+        'Primer Apellido: Pacheco',
+        'Segundo Apellido: —Sin dato',
+        'Número de Bolsillo: 4247181234',
+        'Número Documento: 1000319549',
       ]);
+
       expect(text(contenido('Controller · Admisión'))).toBe('Sin información en este aplicativo.');
+      expect(titulo('Controller · Formas de pago')).toBe('Id Forma Pago: 2');
+      expect(datos('Controller · Formas de pago')).toEqual(['Descripción Forma Pago: Crédito']);
       expect(warn).not.toHaveBeenCalled();
     } finally {
       warn.mockRestore();
     }
+  });
+
+  it('una respuesta sin `id` (fuera de contrato) no se asocia con ningún acordeón', async () => {
+    await navigate();
+    flushNombres();
+    expectPlantilla().flush(ok(PLANTILLA_BACK));
+    await settle();
+    // Forma que devuelve hoy el back: el nombre de la conexión y las etiquetas, sin ids.
+    expectFuentes().flush(
+      ok({
+        data: [
+          {
+            nombre: 'Pago de Servicios ConexionPrepago',
+            datos: [{ nombre: 'Código Producto', tipo: 'string', valor: '240000143190' }],
+          },
+        ],
+      }),
+    );
+    await stable();
+
+    trigger('Prepago · Detalle del movimiento').click();
+    await stable();
+    expect(text(contenido('Prepago · Detalle del movimiento'))).toBe('Sin información en este aplicativo.');
   });
 
   it('el título de la sección admite {campo} de la respuesta de las fuentes', async () => {

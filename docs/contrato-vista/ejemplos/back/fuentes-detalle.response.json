@@ -1,0 +1,190 @@
+{
+  "codigoEstado": 200,
+  "respuestaEstado": true,
+  "mensaje": null,
+  "errores": [],
+  "mensajeError": null,
+  "resultado": {
+    "data": [
+      {
+        "id": "fuentePrepagoMovimientoDetalle",
+        "nombre": "Prepago · Detalle del movimiento",
+        "datos": [
+          {
+            "id": "codigoProducto",
+            "nombre": "Código Producto",
+            "tipo": "string",
+            "valor": "240000143190"
+          },
+          {
+            "id": "idMovimiento",
+            "nombre": "Id Movimiento",
+            "tipo": "string",
+            "valor": "19957"
+          },
+          {
+            "id": "fechaCreacion",
+            "nombre": "Fecha de Creación",
+            "tipo": "datetime",
+            "valor": "2026-08-14T20:08:53Z"
+          },
+          {
+            "id": "valorFinal",
+            "nombre": "Valor Final",
+            "tipo": "currency",
+            "valor": null
+          },
+          {
+            "id": "valorOriginal",
+            "nombre": "Valor Original",
+            "tipo": "currency",
+            "valor": null
+          }
+        ]
+      },
+      {
+        "id": "fuentePrepagoMovimiento",
+        "nombre": "Prepago · Movimiento",
+        "datos": [
+          {
+            "id": "idMovimientoPrepago",
+            "nombre": "Id Movimiento Prepago",
+            "tipo": "string",
+            "valor": "19957"
+          },
+          {
+            "id": "idPrepagoCliente",
+            "nombre": "Id Prepago Cliente",
+            "tipo": "string",
+            "valor": "679"
+          },
+          {
+            "id": "idTipoMovimiento",
+            "nombre": "Id Tipo Movimiento",
+            "tipo": "string",
+            "valor": "4"
+          },
+          {
+            "id": "descripcionCorta",
+            "nombre": "Descripción Corta",
+            "tipo": "string",
+            "valor": "Pago Inter Pay APP"
+          }
+        ]
+      },
+      {
+        "id": "fuentePrepagoDetalleCuenta",
+        "nombre": "Prepago · Detalle de la cuenta",
+        "datos": [
+          {
+            "id": "idMovimientoCuenta",
+            "nombre": "Id Movimiento Cuenta",
+            "tipo": "string",
+            "valor": "19957"
+          },
+          {
+            "id": "estadoMovimiento",
+            "nombre": "Estado Movimiento",
+            "tipo": "string",
+            "valor": "Aprobado"
+          },
+          {
+            "id": "bancoTransferencia",
+            "nombre": "Banco Transferencia",
+            "tipo": "string",
+            "valor": null
+          }
+        ]
+      },
+      {
+        "id": "fuentePrepagoDetalleCliente",
+        "nombre": "Prepago · Detalle del cliente",
+        "datos": [
+          {
+            "id": "idPrepagoClienteDetalle",
+            "nombre": "Id Prepago Cliente",
+            "tipo": "string",
+            "valor": "679"
+          },
+          {
+            "id": "primerNombre",
+            "nombre": "Primer Nombre",
+            "tipo": "string",
+            "valor": "Cristhian"
+          },
+          {
+            "id": "segundoNombre",
+            "nombre": "Segundo Nombre",
+            "tipo": "string",
+            "valor": null
+          },
+          {
+            "id": "primerApellido",
+            "nombre": "Primer Apellido",
+            "tipo": "string",
+            "valor": "Pacheco"
+          },
+          {
+            "id": "segundoApellido",
+            "nombre": "Segundo Apellido",
+            "tipo": "string",
+            "valor": null
+          },
+          {
+            "id": "numeroBolsillo",
+            "nombre": "Número de Bolsillo",
+            "tipo": "string",
+            "valor": "4247181234"
+          },
+          {
+            "id": "numeroDocumento",
+            "nombre": "Número Documento",
+            "tipo": "string",
+            "valor": "1000319549"
+          }
+        ]
+      },
+      {
+        "id": "fuenteControllerAdmision",
+        "nombre": "Controller · Admisión",
+        "datos": []
+      },
+      {
+        "id": "fuenteControllerGuiaFormaPago",
+        "nombre": "Controller · Forma de pago de la guía",
+        "datos": [
+          {
+            "id": "idAdminisionMensajeria",
+            "nombre": "Id Admisión Mensajeria",
+            "tipo": "string",
+            "valor": "349885052"
+          },
+          {
+            "id": "idFormaPago",
+            "nombre": "Id Forma Pago",
+            "tipo": "string",
+            "valor": "2"
+          }
+        ]
+      },
+      {
+        "id": "fuenteControllerFormasPago",
+        "nombre": "Controller · Formas de pago",
+        "datos": [
+          {
+            "id": "idFormaPagoTar",
+            "nombre": "Id Forma Pago",
+            "tipo": "string",
+            "valor": "2"
+          },
+          {
+            "id": "descripcionFormaPago",
+            "nombre": "Descripción Forma Pago",
+            "tipo": "string",
+            "valor": "Crédito"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -62,10 +62,10 @@ export interface RecordSource {
 
 /**
  * Acordeones (v1.1). Los datos salen siempre de `GET /Conciliaciones/fuentes-detalle` (fuente fija
- * del front): cada fuente (`nombre`) tiene sus datos (`nombre`, `tipo`, `valor`).
+ * del front): cada fuente (`id`) tiene sus datos (`id`, `nombre`, `tipo`, `valor`).
  *
- * - Con `accordion.items`, hay un acordeón por elemento: su `id` es el `nombre` de la fuente y cada
- *   columna lee el dato cuyo `nombre` es su `accessorKey`.
+ * - Con `accordion.items`, hay un acordeón por elemento: lee la fuente cuyo `id` es el del
+ *   elemento, y cada columna lee el dato cuyo `id` es su `accessorKey`.
  * - Sin `items`, hay un acordeón por fuente, con todos sus datos.
  */
 export interface AccordionBlock {
@@ -79,7 +79,7 @@ export interface AccordionBlock {
 }
 
 export interface AccordionItemDefinition {
-  /** `nombre` de la fuente en `fuentes-detalle` (p. ej. `fuentePrepagoMovimiento`). */
+  /** `id` de la fuente en `fuentes-detalle` (p. ej. `fuentePrepagoMovimiento`). */
   readonly id: string;
   /**
    * Texto del acordeón. Si falta o es igual al `id`, el front usa el nombre que tiene asociado a
@@ -106,7 +106,7 @@ export interface FieldListDefinition {
 export interface FieldColumnDefinition {
   readonly id: string;
   readonly header: string;
-  /** `nombre` del dato en la fuente. */
+  /** `id` del dato en la fuente. */
   readonly accessorKey: string;
   /** Si falta, la celda sale del `tipo` del dato (`cellsByType` o la celda por defecto). */
   readonly cell?: ValueCellRef;
@@ -147,16 +147,23 @@ export interface FuentesDetalle {
 
 /** Un aplicativo y sus datos (`FuenteDetalleDto`). */
 export interface FuenteDetalle {
+  /** Identifica la fuente: es el `id` del acordeón en la plantilla (`accordion.items[].id`). */
+  readonly id: string | null;
+  /** Nombre visible de la fuente; solo se usa como título cuando la plantilla no trae `items`. */
   readonly nombre: string | null;
   readonly datos: readonly DatoDetalle[] | null;
 }
 
 /** Un dato de un aplicativo (`DatoDetalleDto`). */
 export interface DatoDetalle {
+  /** Identifica el dato: es el `accessorKey` de la columna en la plantilla. */
+  readonly id: string | null;
+  /** Etiqueta visible; solo se usa cuando la plantilla no trae `items`. */
   readonly nombre: string | null;
   /** Tipo del valor según el back (p. ej. `string`, `decimal`, `date`). */
   readonly tipo: string | null;
-  readonly valor: unknown;
+  /** Texto, número, booleano o `null`. Fechas en ISO 8601. */
+  readonly valor: string | number | boolean | null;
 }
 
 /** Pestañas (v1.1): cada una muestra otro bloque de la plantilla. */
