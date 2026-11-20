@@ -13,6 +13,7 @@ import type {
 } from '../../../core/data-access/vista.model';
 import type { ApiResponse } from '../../../core/http/api-response';
 import { ViewBlockOutlet } from './view-block';
+import { ViewTabPanel } from './view-tabs';
 
 function ok<T>(resultado: T): ApiResponse<T> {
   return {
@@ -243,6 +244,50 @@ describe('ViewBlockOutlet', () => {
     expect(tab('Movimientos').getAttribute('aria-selected')).toBe('true');
     expectMovimientos(1, 'fecha:desc').flush(ok(pagina()));
     await stable();
+  });
+
+  it('pestañas: si todas están deshabilitadas queda abierta la primera', async () => {
+    await render({
+      ...PESTANAS,
+      tabs: { items: [{ ...PESTANAS.tabs.items[0], disabled: true }, PESTANAS.tabs.items[2]] },
+    });
+
+    expect(tab('Notas').getAttribute('aria-selected')).toBe('true');
+    http.expectOne((req) => req.url === '/api/casos/C%201/notas').flush(ok(pagina({ rows: [] })));
+    await stable();
+  });
+
+  it('pestañas: el contexto de la plantilla de cada pestaña es la pestaña y su etiqueta', () => {
+    expect(ViewTabPanel.ngTemplateContextGuard({} as ViewTabPanel, {})).toBe(true);
+  });
+
+  it('tabla sin configuración: pagina en el servidor con 10 filas, sin título y con orden múltiple', async () => {
+    const block: TableBlock = {
+      id: 'simple',
+      type: 'table',
+      dataSource: {
+        path: '/simple',
+        sorting: {
+          multi: true,
+          default: [
+            { id: 'fecha', desc: true },
+            { id: 'valor', desc: false },
+          ],
+        },
+      },
+      table: { ...TABLA.table, selection: { mode: 'multi' } },
+    };
+    await render(block);
+
+    const req = http.expectOne((r) => r.url === '/api/simple');
+    expect(req.request.params.get('pageNumber')).toBe('1');
+    expect(req.request.params.get('pageSize')).toBe('10');
+    expect(req.request.params.getAll('sort')).toEqual(['fecha:desc', 'valor:asc']);
+    req.flush(ok(pagina()));
+    await stable();
+
+    expect(element.querySelector('h2')).toBeNull();
+    expect(element.querySelector('table')?.hasAttribute('aria-labelledby')).toBe(false);
   });
 
   it('pestañas: no pinta un bloque que se contiene a sí mismo', async () => {

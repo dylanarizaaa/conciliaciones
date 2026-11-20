@@ -183,6 +183,26 @@ describe('buildTemplateTable', () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('HtmlCell'));
     warn.mockRestore();
   });
+
+  it('un encabezado fuera del catálogo se pinta con su `label` como texto y lo avisa en consola', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const [conLabel, sinLabel] = buildTemplateTable({
+        rowId: 'id',
+        columns: [
+          { id: 'a', accessorKey: 'a', header: { component: 'FancyHeader', inputs: { label: 'A' } } as never },
+          { id: 'b', accessorKey: 'b', header: { component: 'FancyHeader' } as never, meta: { align: 'center' } },
+        ],
+      }).columns;
+
+      expect(conLabel.header).toBe('A');
+      expect(sinLabel.header).toBe('');
+      expect(sinLabel.meta).toEqual({ className: 'text-center', kind: undefined });
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('FancyHeader'));
+    } finally {
+      warn.mockRestore();
+    }
+  });
 });
 
 describe('Tabla paramétrica (catálogo de celdas)', () => {

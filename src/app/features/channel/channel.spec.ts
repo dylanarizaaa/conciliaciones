@@ -280,4 +280,44 @@ describe('Channel', () => {
     expect(element.querySelector('[role="alert"]')).toBeNull();
     expect(element.querySelectorAll('tbody tr').length).toBe(3);
   });
+
+  it('si la página pedida ya no existe (?pagina=9), lleva a la última y desde ahí vuelve a la primera', async () => {
+    await navigate(`${BASE}?pagina=9`);
+    flushNombres();
+    const navegacion = nextNavigation();
+    expectReglas(9).flush(ok(pagina({ pageNumber: 9, data: [] })));
+    await navegacion;
+    expect(TestBed.inject(Router).url).toBe(`${BASE}?pagina=3`);
+    harness.detectChanges();
+    expectReglas(3).flush(ok(pagina({ pageNumber: 3 })));
+    await stable();
+
+    // La primera página no lleva `?pagina` en la URL.
+    const primera = nextNavigation();
+    const input = element.querySelector<HTMLInputElement>('app-paginator input')!;
+    input.value = '1';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await primera;
+    expect(TestBed.inject(Router).url).toBe(BASE);
+    harness.detectChanges();
+    expectReglas(1).flush(ok(pagina()));
+    await stable();
+  });
+
+  it('si no llegan los nombres, usa los genéricos en la miga de pan', async () => {
+    await navigate();
+    const falla = { status: 500, statusText: 'Server Error' };
+    http.expectOne('/api/Conciliaciones/proyectos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/procesos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos').flush(null, falla);
+    http.match((req) => req.url === REGLAS_URL).forEach((req) => req.flush(ok(pagina())));
+    await stable();
+
+    expect(text(element.querySelector('h1'))).toBe('Canal');
+    const miga = text(element.querySelector('nav[aria-label="Ruta de navegación"]'));
+    expect(miga).toContain('Plataforma');
+    expect(miga).toContain('Categoría');
+  });
 });
+

@@ -177,4 +177,51 @@ describe('vista.utils', () => {
     ]);
     expect(leaves.map((column) => column.id)).toEqual(['a', 'b', 'c']);
   });
+
+  it('conserva el orden y los filtros de la página, y sin monto afectado usa 0', () => {
+    expect(
+      toTablePage({
+        data: [{ id: 1 }],
+        casosTotales: 4,
+        sort: [{ id: 'fecha', desc: true }],
+        filters: { estado: 'CON_NOVEDAD' },
+      }),
+    ).toEqual({
+      pageNumber: 1,
+      pageSize: 1,
+      totalRows: 1,
+      totalPages: 1,
+      sort: [{ id: 'fecha', desc: true }],
+      filters: { estado: 'CON_NOVEDAD' },
+      summary: { casosTotales: 4, montoAfectado: 0 },
+      rows: [{ id: 1 }],
+    });
+    expect(toTablePage(null)).toEqual({ pageNumber: 1, pageSize: 0, totalRows: 0, totalPages: 0, rows: [] });
+  });
+
+  it('una plantilla sin lista de bloques o con versión ilegible se rechaza', () => {
+    expect(() => assertSupportedTemplate({ schemaVersion: '1.0', blocks: 'tabla' } as never)).toThrow(
+      'La plantilla no trae ningún bloque para mostrar.',
+    );
+    expect(() => assertSupportedTemplate({ schemaVersion: '.1', blocks: [] } as never)).toThrow(
+      'La plantilla usa la versión .1 del contrato.',
+    );
+    expect(() => assertSupportedTemplate(null as never)).toThrow(ApiError);
+  });
+
+  it('sin layout no hay bloques de primer nivel y la tabla es la primera que llegue', () => {
+    const plantilla = {
+      blocks: [
+        { id: 'a', type: 'accordion' },
+        { id: 't1', type: 'table' },
+        { id: 't2', type: 'table' },
+      ],
+    } as unknown as ViewTemplate;
+    expect(layoutBlocks(plantilla)).toEqual([]);
+    expect(findTableBlock(plantilla)?.id).toBe('t1');
+    expect(
+      findTableBlock({ ...plantilla, layout: { type: 'stack', items: [{ blockId: 'a' }, { blockId: 'falta' }] } })
+        ?.id,
+    ).toBe('t1');
+  });
 });

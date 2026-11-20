@@ -182,4 +182,33 @@ describe('Category', () => {
     expect(element.querySelector('[role="alert"]')).toBeNull();
     expect(element.querySelectorAll('app-status-card').length).toBe(3);
   });
+
+  it('anuncia en singular cuando hay un solo canal', async () => {
+    await navigate();
+    flushAll({ ...SUBPROCESOS, data: [SUBPROCESOS.data[0]] });
+    await harness.fixture.whenStable();
+
+    expect(text(element.querySelector('[role="status"]'))).toBe('Se cargó 1 canal.');
+  });
+
+  it('si no llegan la plataforma ni la categoría, usa los nombres genéricos y reintenta ambas', async () => {
+    await navigate();
+    const falla = { status: 500, statusText: 'Server Error' };
+    http.expectOne(PROYECTOS_URL).flush(null, falla);
+    http.expectOne((req) => req.url === PROCESOS_URL).flush(null, falla);
+    http.expectOne((req) => req.url === SUBPROCESOS_URL).flush(ok({ ...SUBPROCESOS, data: undefined }));
+    await harness.fixture.whenStable();
+
+    expect(text(element.querySelector('h1'))).toBe('Categoría');
+    expect(text(element.querySelector('nav[aria-label="Ruta de navegación"]'))).toContain('Plataforma');
+
+    element.querySelector<HTMLButtonElement>('[role="alert"] button')!.click();
+    harness.detectChanges();
+    http.expectNone((req) => req.url === SUBPROCESOS_URL);
+    http.expectOne(PROYECTOS_URL).flush(ok(PROYECTOS));
+    http.expectOne((req) => req.url === PROCESOS_URL).flush(ok(PROCESOS));
+    await harness.fixture.whenStable();
+    expect(text(element.querySelector('h1'))).toBe('Recargas');
+  });
 });
+

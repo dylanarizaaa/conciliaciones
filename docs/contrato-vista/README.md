@@ -64,7 +64,6 @@ en todas las reglas:
 | Fuente de los acordeones (`fuentes-detalle`) | `FUENTES.fuentesDetalle`. Se ignora el `dataSource` del bloque `accordion`. |
 | Título de la tabla de Regla: "Diferencias por resolver" | `rule.ts`. Una plantilla puede cambiarlo con el `title` del bloque. |
 | Encabezados de las pantallas ("Detalle de la diferencia", …) | Cada pantalla. El `title` raíz de la plantilla no se usa. |
-| Nombre visible de cada fuente ("Prepago · Movimiento") | `TITULOS_FUENTE` en `src/app/core/data-access/fuentes.ts`. Se usa cuando el `title` del acordeón falta o es el mismo id técnico. Una fuente que no está en la lista se nombra a partir de su id ("fuenteNuevaFuente" → "Nueva fuente"). |
 
 Solo una tabla dentro de una pestaña (p. ej. el historial) declara su fuente en `dataSource.path` y
 `dataSource.query`. Ambos admiten `{proyectoId}`, `{procesoId}`, `{subProcesoId}`, `{reglaId}` y
@@ -121,7 +120,7 @@ Con `accordion.items` (así lo usa el back), hay un acordeón por elemento:
 | Propiedad | Uso |
 | --- | --- |
 | `items[].id` | `id` de la fuente en `fuentes-detalle` (sin distinguir mayúsculas). Si la fuente no llega, el acordeón muestra `emptyState`. |
-| `items[].title` | Texto del acordeón. Si falta o es igual al `id`, el front usa el nombre asociado a la fuente. |
+| `items[].title` | Obligatorio. Texto del acordeón: el front lo muestra tal como llega, así que debe ser un nombre para el usuario ("Prepago · Movimiento"), no el id técnico. |
 | `items[].defaultOpen` | Abierto al entrar. |
 | `content.title` | Título de la tarjeta, con `{campo}` de los datos: `"Número de guía: {numeroGuia}"`. Si falta algún dato, no se muestra. Los datos del título no se repiten en la lista. |
 | `content.columns[]` | `id`, `accessorKey` (el `id` del dato), `header` (la etiqueta que se muestra) y `cell` opcional. Sin `cell`, la celda sale del `tipo` del dato. |

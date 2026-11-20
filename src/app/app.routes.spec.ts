@@ -24,6 +24,8 @@ describe('Rutas', () => {
     await harness.navigateByUrl('/plataformas/p1/categorias/c1/canales/s1/reglas/r1/conciliacionId/u-1');
 
     expect(TestBed.inject(Router).url).toBe('/plataformas/p1/categorias/c1/canales/s1/reglas/r1/casos/u-1');
-    expect(harness.routeNativeElement?.tagName.toLowerCase()).toBe('app-detail');
+    // Las pantallas cuelgan de la raíz con el ámbito de estilos del micro front.
+    expect(harness.routeNativeElement?.tagName.toLowerCase()).toBe('app-mf-scope');
+    expect(harness.routeNativeElement?.querySelector('app-detail')).not.toBeNull();
   });
 });

@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { rxResource } from '@angular/core/rxjs-interop';
 import { HlmAccordionImports } from '@spartan-ng/helm/accordion';
 import { HlmSkeleton } from '@spartan-ng/helm/skeleton';
-import { tituloFuente } from '../../../core/data-access/fuentes';
 import type {
   AccordionBlock,
   AccordionDefinition,
@@ -132,7 +131,7 @@ function fromTemplate(
   const enTitulo = title ? placeholders(item.content.title) : new Set<string>();
   return {
     key: `${index}-${item.id}`,
-    title: item.title!,
+    title: item.title,
     defaultOpen: item.defaultOpen ?? false,
     cardTitle: title,
     rows: rows.filter(({ accessorKey }) => !enTitulo.has(accessorKey)),
@@ -159,7 +158,7 @@ function fromData(fuente: FuenteDetalle, index: number, config: AccordionDefinit
   const id = fuente.id?.trim() || fuente.nombre?.trim() || `Aplicativo ${index + 1}`;
   return {
     key: `${index}-${id}`,
-    title: tituloFuente(id, fuente.nombre),
+    title: fuente.nombre?.trim() || id,
     defaultOpen: false,
     cardTitle: titulo && !isEmptyValue(titulo.valor) ? `${titulo.etiqueta}: ${String(titulo.valor)}` : '',
     rows,

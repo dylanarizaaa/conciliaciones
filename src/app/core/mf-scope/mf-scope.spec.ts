@@ -10,8 +10,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, type Route, Router } from '@angular/router';
 import { BrnDialogService } from '@spartan-ng/brain/dialog';
 import { BrnOverlayService } from '@spartan-ng/brain/overlay';
-import { routes as ventasRoutes } from '../../features/discount-sales/discount-sales.routes';
-import { routes as movilizadosRoutes } from '../../features/mobilized/mobilized.routes';
+import postcssConfig from '../../../../.postcssrc.json';
+import { routes } from '../../app.routes';
 import { MF_SCOPE_CLASS, MfOverlayContainer, MfScope, provideMfScope } from './mf-scope';
 
 @Component({ template: '<p>pantalla</p>' })
@@ -35,8 +35,8 @@ describe('Ámbito de estilos del micro front', () => {
     await fixture.whenStable();
 
     const host = fixture.nativeElement as HTMLElement;
-    expect(MF_SCOPE_CLASS).toBe('mf-reportes');
-    expect(host.classList).toContain('mf-reportes');
+    expect(MF_SCOPE_CLASS).toBe('mf-conciliaciones');
+    expect(host.classList).toContain(MF_SCOPE_CLASS);
     expect(host.textContent).toContain('pantalla');
   });
 
@@ -49,10 +49,10 @@ describe('Ámbito de estilos del micro front', () => {
 
     const propio = routeInjector.get(OverlayContainer);
     expect(propio).toBeInstanceOf(MfOverlayContainer);
-    expect(propio.getContainerElement().classList).toContain('mf-reportes');
+    expect(propio.getContainerElement().classList).toContain(MF_SCOPE_CLASS);
     // El del orquestador (raíz) sigue sin la clase.
     expect(TestBed.inject(OverlayContainer).getContainerElement().classList).not.toContain(
-      'mf-reportes',
+      MF_SCOPE_CLASS,
     );
 
     // Los servicios de overlay se crean de nuevo en la ruta para usar el contenedor propio.
@@ -71,15 +71,30 @@ describe('Ámbito de estilos del micro front', () => {
     overlayRef.dispose();
   });
 
-  it.each([
-    ['ventas con descuento', ventasRoutes, 'Ventas con descuento'],
-    ['movilizados por cliente', movilizadosRoutes, 'Movilizados por cliente'],
-  ])('las rutas expuestas de %s se envuelven en el ámbito', async (_, routes, title) => {
-    const [raiz] = routes as Route[];
+  it('la clase coincide con el ámbito con que el build encierra la hoja global', () => {
+    const plugin = postcssConfig.plugins['./tools/postcss-mf-scope.cjs'];
+    expect(plugin.scope).toBe(`.${MF_SCOPE_CLASS}`);
+    expect(plugin.files).toEqual(['src/styles.css']);
+  });
+
+  it('las rutas expuestas se envuelven en el ámbito y cargan sus pantallas', async () => {
+    const [raiz, ...otras] = routes;
+    expect(otras).toHaveLength(0);
+    expect(raiz.path).toBe('');
     expect(raiz.component).toBe(MfScope);
     expect(raiz.providers).toEqual(provideMfScope());
-    const [pantalla] = raiz.children ?? [];
-    expect(pantalla.title).toBe(title);
-    expect(await pantalla.loadComponent?.()).toBeDefined();
+
+    const pantallas = (raiz.children ?? []).filter((ruta) => ruta.loadComponent);
+    expect(pantallas.map((ruta) => ruta.title)).toEqual([
+      'Conciliaciones',
+      'Plataforma | Conciliaciones',
+      'Categoría | Conciliaciones',
+      'Canal | Conciliaciones',
+      'Regla | Conciliaciones',
+      'Detalle | Conciliaciones',
+    ]);
+    for (const pantalla of pantallas) {
+      expect(await pantalla.loadComponent?.()).toBeDefined();
+    }
   });
 });

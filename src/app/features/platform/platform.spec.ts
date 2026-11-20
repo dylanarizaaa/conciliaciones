@@ -163,4 +163,28 @@ describe('Platform', () => {
     expect(element.querySelector('[role="alert"]')).toBeNull();
     expect(element.querySelectorAll('app-difference-card').length).toBe(3);
   });
+
+  it('anuncia en singular cuando hay una sola categoría', async () => {
+    flushAll({ ...PROCESOS, data: [PROCESOS.data[0]] });
+    await harness.fixture.whenStable();
+
+    expect(element.querySelector('[role="status"]')?.textContent?.trim()).toBe('Se cargó 1 categoría.');
+  });
+
+  it('si falla la plataforma, reintenta solo esa consulta', async () => {
+    http.expectOne(PROYECTOS_URL).flush(null, { status: 500, statusText: 'Server Error' });
+    http.expectOne((req) => req.url === PROCESOS_URL).flush(ok({ ...PROCESOS, data: undefined }));
+    await harness.fixture.whenStable();
+    expect(element.querySelector('[role="alert"]')).not.toBeNull();
+
+    element.querySelector<HTMLButtonElement>('[role="alert"] button')!.click();
+    harness.detectChanges();
+
+    http.expectNone((req) => req.url === PROCESOS_URL);
+    http.expectOne(PROYECTOS_URL).flush(ok(PROYECTOS));
+    await harness.fixture.whenStable();
+    expect(element.querySelector('[role="alert"]')).toBeNull();
+    expect(element.textContent).toContain('No hay diferencias en esta plataforma.');
+  });
 });
+

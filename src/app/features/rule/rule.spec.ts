@@ -539,6 +539,61 @@ describe('Rule', () => {
     await stable();
 
     expect(text(element.querySelector('app-error-state'))).toContain('No pudimos completar "Descargar reporte".');
+
+    // "Reintentar" repite la descarga.
+    button('Reintentar').click();
+    http
+      .expectOne((req) => req.url === '/api/Informes/export-excel')
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    await stable();
+    expect(text(element.querySelector('app-error-state'))).toContain('No pudimos completar "Descargar reporte".');
+  });
+
+  it('si la página pedida ya no existe (?pagina=5), lleva a la última disponible', async () => {
+    await navigate(`${BASE}?pagina=5`);
+    flushNombres();
+    expectPlantilla().flush(ok(PLANTILLA_REGLA));
+    await settle();
+
+    const navegacion = nextNavigation();
+    expectDatos(5).flush(ok(pagina({ pageNumber: 5, totalCount: 20, totalPages: 2, data: [] })));
+    await navegacion;
+    await settle();
+
+    expect(TestBed.inject(Router).url).toBe(`${BASE}?pagina=2`);
+    expectDatos(2).flush(ok(pagina({ pageNumber: 2, totalCount: 20, totalPages: 2 })));
+    await stable();
+    expect(element.querySelectorAll('tbody tr').length).toBeGreaterThan(0);
+  });
+
+  it('sin totales del back, el resumen solo muestra los casos de la página', async () => {
+    await cargar({ ...pagina(), casosTotales: undefined, montoAfectado: undefined } as unknown as RegistrosPagina);
+
+    const resumen = text(element.querySelector('app-summary-card'));
+    expect(resumen).toContain('Casos');
+    expect(resumen).not.toContain('Monto afectado');
+  });
+
+  it('si no llegan los nombres, la miga de pan usa los genéricos y la pantalla muestra el error', async () => {
+    await navigate();
+    const falla = { status: 500, statusText: 'Error' };
+    http.expectOne('/api/Conciliaciones/proyectos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/procesos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos/reglas').flush(null, falla);
+    expectPlantilla().flush(ok(PLANTILLA_REGLA));
+    await settle();
+    http.match((req) => req.url === '/api/Conciliaciones/subprocesos-registros/reglas').forEach((req) => req.flush(ok(pagina())));
+    await stable();
+
+    expect([...element.querySelectorAll('nav[aria-label="Ruta de navegación"] li')].map(text)).toEqual([
+      'Conciliaciones',
+      'Plataforma',
+      'Categoría',
+      'Canal',
+      'Regla',
+    ]);
+    expect(element.querySelector('app-error-state')).not.toBeNull();
   });
 
   it('muestra el estado vacío definido en la plantilla', async () => {

@@ -332,6 +332,57 @@ describe('Detail', () => {
     ]);
   });
 
+  it('sin `items`: `titleField` va como título de la tarjeta y una fuente sin nombre usa su id', async () => {
+    await cargar(
+      conAcordeon({}, { items: undefined, cellsByType: undefined, titleField: 'NUMEROGUIA', type: undefined, layoutColumns: undefined }),
+      {
+        data: [
+          {
+            id: 'fuenteSinNombre',
+            nombre: '',
+            datos: [
+              null as never,
+              { id: 'numeroGuia', nombre: 'Número de guía', tipo: 'string', valor: '700' },
+              // Un dato sin etiqueta usa su id; un objeto (fuera de contrato) cuenta como sin dato.
+              { id: 'recaudo', nombre: '', tipo: 'decimal', valor: {} as never },
+              { id: '', nombre: '', tipo: 'string', valor: 'sin id ni nombre' },
+            ],
+          },
+          { id: '', nombre: '', datos: [{ id: 'numeroGuia', nombre: 'Número de guía', tipo: 'string', valor: '' }] },
+        ],
+      },
+    );
+
+    // Sin `layoutColumns` hay una sola columna; sin `type`, se pueden abrir varios a la vez.
+    expect(element.querySelectorAll('[hlmAccordion] > div')).toHaveLength(1);
+    trigger('fuenteSinNombre').click();
+    trigger('Aplicativo 2').click();
+    await stable();
+
+    expect(text(contenido('fuenteSinNombre').querySelector('[role="heading"]'))).toBe('Número de guía: 700');
+    expect(datos('fuenteSinNombre')).toEqual(['recaudo: —Sin dato']);
+    // El dato del título llega vacío: no hay título y la fuente se muestra sin información.
+    expect(contenido('Aplicativo 2').querySelector('[role="heading"]')).toBeNull();
+    expect(trigger('fuenteSinNombre').getAttribute('aria-expanded')).toBe('true');
+    expect(trigger('Aplicativo 2').getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('si no llegan los nombres, la miga de pan usa los nombres genéricos', async () => {
+    await navigate();
+    const falla = { status: 500, statusText: 'Error' };
+    http.expectOne('/api/Conciliaciones/proyectos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/procesos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos').flush(null, falla);
+    http.expectOne((req) => req.url === '/api/Conciliaciones/subprocesos/reglas').flush(null, falla);
+    expectPlantilla().flush(ok(PLANTILLA));
+    await stable();
+
+    expect([...element.querySelectorAll('nav[aria-label="Ruta de navegación"] li')].map(text)).toEqual(
+      ['Conciliaciones', 'Plataforma', 'Categoría', 'Canal', 'Regla', 'Detalle'],
+    );
+    expect(element.querySelector('app-error-state')).not.toBeNull();
+  });
+
   it('respeta el modo single de la plantilla', async () => {
     await cargar(conAcordeon({}, { type: 'single' }));
 
@@ -431,46 +482,46 @@ describe('Detail', () => {
       await stable();
 
       expect(element.querySelector('app-error-state')).toBeNull();
-      // La plantilla usa el id técnico como título: el front lo asocia con el nombre visible.
+      // El acordeón muestra el `title` de la plantilla tal cual (hoy el back manda el id técnico).
       expect([...element.querySelectorAll('hlm-accordion-trigger button')].map(text)).toEqual([
-        'Prepago · Detalle del movimiento',
-        'Prepago · Movimiento',
-        'Prepago · Detalle de la cuenta',
-        'Prepago · Detalle del cliente',
-        'Controller · Admisión',
-        'Controller · Forma de pago de la guía',
-        'Controller · Formas de pago',
+        'fuentePrepagoMovimientoDetalle',
+        'fuentePrepagoMovimiento',
+        'fuentePrepagoDetalleCuenta',
+        'fuentePrepagoDetalleCliente',
+        'fuenteControllerAdmision',
+        'fuenteControllerGuiaFormaPago',
+        'fuenteControllerFormasPago',
       ]);
 
       for (const titulo of [
-        'Prepago · Detalle del movimiento',
-        'Prepago · Movimiento',
-        'Prepago · Detalle del cliente',
-        'Controller · Admisión',
-        'Controller · Formas de pago',
+        'fuentePrepagoMovimientoDetalle',
+        'fuentePrepagoMovimiento',
+        'fuentePrepagoDetalleCliente',
+        'fuenteControllerAdmision',
+        'fuenteControllerFormasPago',
       ]) {
         trigger(titulo).click();
       }
       await stable();
 
       const titulo = (acordeon: string) => text(contenido(acordeon).querySelector('[role="heading"]'));
-      expect(titulo('Prepago · Detalle del movimiento')).toBe('Código Producto: 240000143190');
+      expect(titulo('fuentePrepagoMovimientoDetalle')).toBe('Código Producto: 240000143190');
       // La celda la decide la plantilla (CurrencyCell en un id) y "Valor Final" llega sin dato.
-      expect(datos('Prepago · Detalle del movimiento')).toEqual(
+      expect(datos('fuentePrepagoMovimientoDetalle')).toEqual(
         expect.arrayContaining(['Id Movimiento: $ 19.957', 'Valor Final: —Sin dato']),
       );
 
       // "Id Movimiento Prepago" ya está en el título de la tarjeta: no se repite en la lista.
-      expect(titulo('Prepago · Movimiento')).toBe('Id Movimiento Prepago: 19957');
-      expect(datos('Prepago · Movimiento')).toEqual([
+      expect(titulo('fuentePrepagoMovimiento')).toBe('Id Movimiento Prepago: 19957');
+      expect(datos('fuentePrepagoMovimiento')).toEqual([
         'Id Prepago Cliente: 679',
         'Id Tipo Movimiento: 4',
         'Descripción Corta: Pago Inter Pay APP',
       ]);
 
       // La plantilla repite la columna "primerNombre": se pinta tal cual, sin errores.
-      expect(titulo('Prepago · Detalle del cliente')).toBe('Id Prepago Cliente: 679');
-      expect(datos('Prepago · Detalle del cliente')).toEqual([
+      expect(titulo('fuentePrepagoDetalleCliente')).toBe('Id Prepago Cliente: 679');
+      expect(datos('fuentePrepagoDetalleCliente')).toEqual([
         'Primer Nombre: Cristhian',
         'Primer Nombre: Cristhian',
         'Segundo Nombre: —Sin dato',
@@ -480,9 +531,9 @@ describe('Detail', () => {
         'Número Documento: 1000319549',
       ]);
 
-      expect(text(contenido('Controller · Admisión'))).toBe('Sin información en este aplicativo.');
-      expect(titulo('Controller · Formas de pago')).toBe('Id Forma Pago: 2');
-      expect(datos('Controller · Formas de pago')).toEqual(['Descripción Forma Pago: Crédito']);
+      expect(text(contenido('fuenteControllerAdmision'))).toBe('Sin información en este aplicativo.');
+      expect(titulo('fuenteControllerFormasPago')).toBe('Id Forma Pago: 2');
+      expect(datos('fuenteControllerFormasPago')).toEqual(['Descripción Forma Pago: Crédito']);
       expect(warn).not.toHaveBeenCalled();
     } finally {
       warn.mockRestore();
@@ -507,9 +558,9 @@ describe('Detail', () => {
     );
     await stable();
 
-    trigger('Prepago · Detalle del movimiento').click();
+    trigger('fuentePrepagoMovimientoDetalle').click();
     await stable();
-    expect(text(contenido('Prepago · Detalle del movimiento'))).toBe('Sin información en este aplicativo.');
+    expect(text(contenido('fuentePrepagoMovimientoDetalle'))).toBe('Sin información en este aplicativo.');
   });
 
   it('el título de la sección admite {campo} de la respuesta de las fuentes', async () => {

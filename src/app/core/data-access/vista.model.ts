@@ -81,11 +81,8 @@ export interface AccordionBlock {
 export interface AccordionItemDefinition {
   /** `id` de la fuente en `fuentes-detalle` (p. ej. `fuentePrepagoMovimiento`). */
   readonly id: string;
-  /**
-   * Texto del acordeón. Si falta o es igual al `id`, el front usa el nombre que tiene asociado a
-   * esa fuente (`tituloFuente`).
-   */
-  readonly title?: string;
+  /** Texto del acordeón; el front lo muestra tal como llega. */
+  readonly title: string;
   readonly defaultOpen?: boolean;
   readonly content: FieldListDefinition;
 }

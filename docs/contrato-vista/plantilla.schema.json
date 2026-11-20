@@ -1233,6 +1233,7 @@
       "type": "object",
       "required": [
         "id",
+        "title",
         "content"
       ],
       "additionalProperties": false,
@@ -1242,7 +1243,7 @@
           "$ref": "#/$defs/identifier"
         },
         "title": {
-          "description": "Texto del acordeón. Si falta o es igual al id, el front usa el nombre que tiene asociado a la fuente.",
+          "description": "Texto del acordeón. El front lo muestra tal como llega: debe ser un nombre para el usuario, no el id técnico.",
           "type": "string"
         },
         "defaultOpen": {

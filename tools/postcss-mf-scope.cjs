@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * Plugin de PostCSS: encierra la hoja global del micro front en un ámbito (`.mf-reportes`).
+ * Plugin de PostCSS: encierra la hoja global del micro front en un ámbito (`.mf-conciliaciones`).
  *
  * El orquestador carga esta hoja de forma global. Sin ámbito, sus variables (`:root`), el reset de
  * Tailwind y sus utilidades le pisan los estilos al portal (y el portal se cuela en el micro front).
@@ -9,7 +9,7 @@
  * - `:root`, `:host`, `html` y `body` pasan a ser el propio ámbito (variables y estilos base solo
  *   dentro del micro front). Lo de `body` (fondo y color de texto) no se aplica al contenedor de
  *   overlays, que también lleva la clase y debe seguir transparente sobre el portal.
- * - Cualquier otro selector queda dentro del ámbito: `.flex` → `.mf-reportes .flex`. Además suma
+ * - Cualquier otro selector queda dentro del ámbito: `.flex` → `.mf-conciliaciones .flex`. Además suma
  *   una clase de especificidad, así sus reglas le ganan a las del portal dentro del micro front.
  * - Las reglas estructurales de los overlays de CDK (`.cdk-*`) se dejan globales: son las mismas en
  *   el portal y el contenedor de overlays del micro front ya lleva la clase del ámbito.
@@ -23,7 +23,7 @@
 function mfScope(options) {
   const { scope, files } = options;
   if (!scope || !Array.isArray(files) || files.length === 0) {
-    throw new Error('postcss-mf-scope: indica `scope` (p. ej. ".mf-reportes") y `files`.');
+    throw new Error('postcss-mf-scope: indica `scope` (p. ej. ".mf-conciliaciones") y `files`.');
   }
 
   return {
