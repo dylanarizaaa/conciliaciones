@@ -1,44 +1,52 @@
 import { Routes } from '@angular/router';
+import { MfScope, provideMfScope } from './core/mf-scope/mf-scope';
 
 export const routes: Routes = [
   {
     path: '',
-    title: 'Conciliaciones',
-    loadComponent: () => import('./features/home/home').then((m) => m.Home),
-  },
-  {
-    path: 'plataformas/:proyectoId',
-    title: 'Plataforma | Conciliaciones',
-    loadComponent: () => import('./features/platform/platform').then((m) => m.Platform),
-  },
-  {
-    path: 'plataformas/:proyectoId/categorias/:procesoId',
-    title: 'Categoría | Conciliaciones',
-    loadComponent: () => import('./features/category/category').then((m) => m.Category),
-  },
-  {
-    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId',
-    title: 'Canal | Conciliaciones',
-    loadComponent: () => import('./features/channel/channel').then((m) => m.Channel),
-  },
-  {
-    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId',
-    title: 'Regla | Conciliaciones',
-    loadComponent: () => import('./features/rule/rule').then((m) => m.Rule),
-  },
-  {
-    // "Ver detalle" de un caso (conciliación) de la regla.
-    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
-    title: 'Detalle | Conciliaciones',
-    loadComponent: () => import('./features/rule/detail/detail').then((m) => m.Detail),
-  },
-  {
-    // La plantilla del back arma "Ver detalle" como ["conciliacionId", "{conciliacionId}"]: se lleva
-    // a la ruta del detalle hasta que use ["casos", "{conciliacionId}"].
-    path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/conciliacionId/:conciliacionId',
-    redirectTo:
-      'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
-  },
+    component: MfScope,
+    providers: provideMfScope(),
+    children: [
+      {
+        path: '',
+        title: 'Conciliaciones',
+        loadComponent: () => import('./features/home/home').then((m) => m.Home),
+      },
+      {
+        path: 'plataformas/:proyectoId',
+        title: 'Plataforma | Conciliaciones',
+        loadComponent: () => import('./features/platform/platform').then((m) => m.Platform),
+      },
+      {
+        path: 'plataformas/:proyectoId/categorias/:procesoId',
+        title: 'Categoría | Conciliaciones',
+        loadComponent: () => import('./features/category/category').then((m) => m.Category),
+      },
+      {
+        path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId',
+        title: 'Canal | Conciliaciones',
+        loadComponent: () => import('./features/channel/channel').then((m) => m.Channel),
+      },
+      {
+        path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId',
+        title: 'Regla | Conciliaciones',
+        loadComponent: () => import('./features/rule/rule').then((m) => m.Rule),
+      },
+      {
+        // "Ver detalle" de un caso (conciliación) de la regla.
+        path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
+        title: 'Detalle | Conciliaciones',
+        loadComponent: () => import('./features/rule/detail/detail').then((m) => m.Detail),
+      },
+      {
+        // La plantilla del back arma "Ver detalle" como ["conciliacionId", "{conciliacionId}"]: se lleva
+        // a la ruta del detalle hasta que use ["casos", "{conciliacionId}"].
+        path: 'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/conciliacionId/:conciliacionId',
+        redirectTo:
+          'plataformas/:proyectoId/categorias/:procesoId/canales/:subProcesoId/reglas/:reglaId/casos/:conciliacionId',
+      },
+    ]
+  }
 ];
 
 // El orquestador consume este módulo expuesto con `.then((m) => m.default)`.

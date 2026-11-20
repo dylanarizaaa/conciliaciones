@@ -132,7 +132,7 @@ function fromTemplate(
   const enTitulo = title ? placeholders(item.content.title) : new Set<string>();
   return {
     key: `${index}-${item.id}`,
-    title: tituloFuente(item.id, item.title),
+    title: item.title!,
     defaultOpen: item.defaultOpen ?? false,
     cardTitle: title,
     rows: rows.filter(({ accessorKey }) => !enTitulo.has(accessorKey)),
